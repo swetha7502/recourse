@@ -144,7 +144,7 @@ export async function getAccessToken(): Promise<string> {
 async function call<T>(
   method: "GET" | "POST",
   path: string,
-  options: WriteOptions & { body?: unknown } = {},
+  options: WriteOptions & { body?: unknown; rawBody?: string } = {},
 ): Promise<PayPalResponse<T>> {
   const headers: Record<string, string> = {
     Authorization: `Bearer ${await getAccessToken()}`,
@@ -156,7 +156,7 @@ async function call<T>(
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
     headers,
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
+    body: options.rawBody ?? (options.body === undefined ? undefined : JSON.stringify(options.body)),
   });
   const body = await parseBody(res);
   if (!res.ok) throw failure(method, path, res, body);
@@ -236,6 +236,29 @@ export function chargeVaultedPayment(
       payment_source: { paypal: { vault_id: input.vaultId } },
     },
   });
+}
+
+export type WebhookTransmission = {
+  auth_algo: string;
+  cert_url: string;
+  transmission_id: string;
+  transmission_sig: string;
+  transmission_time: string;
+};
+
+// PayPal requires webhook_event byte-for-byte as received, so it is spliced in, not re-serialized.
+export async function verifyWebhookSignature(
+  transmission: WebhookTransmission,
+  webhookId: string,
+  rawEvent: string,
+): Promise<boolean> {
+  const fields = JSON.stringify({ ...transmission, webhook_id: webhookId });
+  const res = await call<{ verification_status: string }>(
+    "POST",
+    "/v1/notifications/verify-webhook-signature",
+    { rawBody: `${fields.slice(0, -1)},"webhook_event":${rawEvent}}` },
+  );
+  return res.data.verification_status === "SUCCESS";
 }
 
 export function approvalUrl(order: PayPalOrder): string | undefined {
