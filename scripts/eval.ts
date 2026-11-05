@@ -42,7 +42,22 @@ const argValue = (name: string) => {
   return index === -1 ? undefined : process.argv[index + 1];
 };
 
-const model = () => process.env.GEMINI_MODEL || "default";
+// All rulings use one pinned model so modes stay comparable; quota only allows ~20 calls a day.
+const model = () => {
+  if (!process.env.GEMINI_MODEL) throw new Error("Pin GEMINI_MODEL for an eval run");
+  return process.env.GEMINI_MODEL;
+};
+const PARSE_MODEL = process.env.EVAL_PARSE_MODEL || "gemini-3.5-flash-lite";
+
+async function withModel<T>(name: string, run: () => Promise<T>): Promise<T> {
+  const previous = process.env.GEMINI_MODEL;
+  process.env.GEMINI_MODEL = name;
+  try {
+    return await run();
+  } finally {
+    process.env.GEMINI_MODEL = previous;
+  }
+}
 const hash = (text: string) => createHash("sha256").update(text).digest("hex").slice(0, 10);
 
 async function cached<T>(key: string, compute: () => Promise<T>): Promise<T> {
@@ -71,8 +86,8 @@ function evidence(testCase: TestCase, constraints: Constraints) {
 type Result = { id: number; mode: AdjudicationMode; expected: Fault; ruling: Ruling };
 
 async function runCase(testCase: TestCase, mode: AdjudicationMode): Promise<Result> {
-  const constraints = await cached(`parse-${model()}-${testCase.id}`, () =>
-    parseInstruction(llm, testCase.instruction),
+  const constraints = await cached(`parse-${testCase.id}`, () =>
+    withModel(PARSE_MODEL, () => parseInstruction(llm, testCase.instruction)),
   );
   const { intent, order } = evidence(testCase, constraints);
   const promptVersion = mode === "rules" ? "rules" : hash(ADJUDICATOR_SYSTEM);

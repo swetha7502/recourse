@@ -1,5 +1,7 @@
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
-const DEFAULT_MODEL = "gemini-3.5-flash";
+// Free-tier quotas are per model per day, so the app falls through this list when one runs out.
+const DEFAULT_MODELS = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-3.5-flash-lite"];
+const EXHAUSTED_COOLDOWN_MS = 60 * 60_000;
 const MAX_ATTEMPTS = 6;
 const RETRYABLE = new Set([429, 500, 503]);
 
@@ -38,7 +40,10 @@ type GeminiPart = {
 type GeminiContent = { role: "user" | "model"; parts: GeminiPart[] };
 type GeminiResponse = {
   candidates?: { content?: GeminiContent; finishReason?: string }[];
-  error?: { message?: string; details?: { retryDelay?: string }[] };
+  error?: {
+    message?: string;
+    details?: { retryDelay?: string; violations?: { quotaId?: string }[] }[];
+  };
 };
 
 export class LlmError extends Error {
@@ -58,10 +63,36 @@ function retryDelayMs(body: GeminiResponse, attempt: number): number {
   return Number.isFinite(seconds) ? seconds * 1000 + 500 : backoff;
 }
 
+const exhaustedUntil = new Map<string, number>();
+
+function isDailyQuota(body: GeminiResponse): boolean {
+  return Boolean(
+    body.error?.details?.some((d) => d.violations?.some((v) => v.quotaId?.includes("PerDay"))),
+  );
+}
+
 async function generate(body: Record<string, unknown>): Promise<GeminiContent> {
+  const pinned = process.env.GEMINI_MODEL;
+  const models = pinned
+    ? [pinned]
+    : DEFAULT_MODELS.filter((m) => (exhaustedUntil.get(m) ?? 0) < Date.now());
+  if (!models.length) throw new LlmError("All Gemini models are out of daily quota", 429);
+
+  for (const [index, model] of models.entries()) {
+    const content = await generateWith(model, body);
+    if (content) return content;
+    exhaustedUntil.set(model, Date.now() + EXHAUSTED_COOLDOWN_MS);
+    console.warn(`[llm] ${model} is out of daily quota${index + 1 < models.length ? ", falling back" : ""}`);
+  }
+  throw new LlmError("All Gemini models are out of daily quota", 429);
+}
+
+async function generateWith(
+  model: string,
+  body: Record<string, unknown>,
+): Promise<GeminiContent | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
-  const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
 
   for (let attempt = 0; ; attempt++) {
     const res = await fetch(`${API_BASE}/${model}:generateContent`, {
@@ -81,6 +112,8 @@ async function generate(body: Record<string, unknown>): Promise<GeminiContent> {
       }
       return content;
     }
+
+    if (res.status === 429 && isDailyQuota(parsed)) return null;
 
     if (!RETRYABLE.has(res.status) || attempt + 1 >= MAX_ATTEMPTS) {
       throw new LlmError(`Gemini ${res.status}: ${parsed.error?.message ?? "unknown"}`, res.status);

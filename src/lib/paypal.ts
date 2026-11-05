@@ -238,6 +238,84 @@ export function chargeVaultedPayment(
   });
 }
 
+export type PayPalRefund = { id: string; status: string };
+
+export function refundCapture(captureId: string, options: WriteOptions = {}) {
+  return call<PayPalRefund>(
+    "POST",
+    `/v2/payments/captures/${encodeURIComponent(captureId)}/refund`,
+    { ...options, body: {} },
+  );
+}
+
+export type PayPalInvoice = {
+  id: string;
+  status: string;
+  detail?: { metadata?: { recipient_view_url?: string } };
+};
+
+export function createInvoice(
+  input: {
+    invoiceNumber: string;
+    recipientEmail: string;
+    itemName: string;
+    amountCents: number;
+    note: string;
+  },
+  options: WriteOptions = {},
+) {
+  return call<PayPalInvoice>("POST", "/v2/invoicing/invoices", {
+    ...options,
+    body: {
+      detail: {
+        invoice_number: input.invoiceNumber,
+        currency_code: CURRENCY,
+        note: input.note,
+        payment_term: { term_type: "DUE_ON_RECEIPT" },
+      },
+      primary_recipients: [{ billing_info: { email_address: input.recipientEmail } }],
+      items: [
+        {
+          name: input.itemName.slice(0, 200),
+          quantity: "1",
+          unit_amount: { currency_code: CURRENCY, value: centsToValue(input.amountCents) },
+        },
+      ],
+    },
+  });
+}
+
+export function sendInvoice(invoiceId: string, options: WriteOptions = {}) {
+  return call<unknown>("POST", `/v2/invoicing/invoices/${encodeURIComponent(invoiceId)}/send`, {
+    ...options,
+    body: { send_to_recipient: true },
+  });
+}
+
+export function getInvoice(invoiceId: string) {
+  return call<PayPalInvoice>("GET", `/v2/invoicing/invoices/${encodeURIComponent(invoiceId)}`);
+}
+
+export function recordInvoicePayment(
+  invoiceId: string,
+  input: { amountCents: number; paymentDate: string; note: string },
+  options: WriteOptions = {},
+) {
+  return call<{ payment_id: string }>(
+    "POST",
+    `/v2/invoicing/invoices/${encodeURIComponent(invoiceId)}/payments`,
+    {
+      ...options,
+      body: {
+        method: "OTHER",
+        payment_date: input.paymentDate,
+        note: input.note,
+        amount: { currency_code: CURRENCY, value: centsToValue(input.amountCents) },
+      },
+    },
+  );
+}
+
 export type WebhookTransmission = {
   auth_algo: string;
   cert_url: string;

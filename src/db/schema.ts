@@ -7,6 +7,7 @@ import {
   real,
   text,
   timestamp,
+  unique,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -88,6 +89,7 @@ export const cases = pgTable("cases", {
   id: id(),
   orderId: uuid("order_id")
     .notNull()
+    .unique()
     .references(() => orders.id),
   complaint: text("complaint").notNull(),
   status: text("status").notNull().default("OPEN"),
@@ -109,7 +111,9 @@ export const rulings = pgTable("rulings", {
   createdAt: createdAt(),
 });
 
-export const ledger = pgTable("ledger", {
+export const ledger = pgTable(
+  "ledger",
+  {
   id: id(),
   caseId: uuid("case_id")
     .notNull()
@@ -120,7 +124,9 @@ export const ledger = pgTable("ledger", {
   paypalRef: text("paypal_ref"),
   status: text("status").notNull(),
   createdAt: createdAt(),
-});
+  },
+  (table) => [unique().on(table.caseId, table.kind)],
+);
 
 export const webhookEvents = pgTable("webhook_events", {
   id: id(),
