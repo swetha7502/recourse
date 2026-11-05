@@ -74,10 +74,13 @@ export const orders = pgTable("orders", {
   id: id(),
   paypalOrderId: text("paypal_order_id").notNull().unique(),
   captureId: text("capture_id").unique(),
-  intentId: uuid("intent_id").references(() => intents.id),
+  intentId: uuid("intent_id")
+    .unique()
+    .references(() => intents.id),
   itemsJson: jsonb("items_json").notNull().default([]),
   amountCents: integer("amount_cents").notNull(),
   status: text("status").notNull(),
+  simulatedAgentError: boolean("simulated_agent_error").notNull().default(false),
   createdAt: createdAt(),
 });
 
