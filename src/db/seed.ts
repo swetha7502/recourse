@@ -1,5 +1,6 @@
 import { loadEnvConfig } from "@next/env";
 import { getDb } from "./index";
+import { seedDemoHistory } from "./demo-history";
 import { buyers, merchants, operators, vaultedPaymentMethods } from "./schema";
 
 loadEnvConfig(process.cwd());
@@ -44,6 +45,8 @@ async function main() {
       customerId: required("SEED_VAULT_CUSTOMER_ID"),
     })
     .onConflictDoNothing({ target: vaultedPaymentMethods.vaultId });
+
+  await seedDemoHistory();
 
   const counts = {
     merchants: (await db.select().from(merchants)).length,

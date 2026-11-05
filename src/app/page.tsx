@@ -1,3 +1,4 @@
+import { DemoControls } from "./demo-controls";
 import { ShopperFlow } from "./shopper-flow";
 
 export default function Home() {
@@ -12,6 +13,7 @@ export default function Home() {
         Prototype on PayPal sandbox: no real money moves. The shopping agent is simulated, using our
         own code and merchant credentials.
       </p>
+      <DemoControls />
     </main>
   );
 }

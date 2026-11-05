@@ -3,7 +3,7 @@ import { after } from "next/server";
 import { getDb } from "@/db";
 import { webhookEvents } from "@/db/schema";
 import { PayPalError, verifyWebhookSignature, type WebhookTransmission } from "@/lib/paypal";
-import { processStoredEvent, type WebhookEvent } from "@/lib/webhooks";
+import { processStoredEvent, resourceIdOf, type WebhookEvent } from "@/lib/webhooks";
 
 function transmissionFrom(headers: Headers): WebhookTransmission | null {
   const transmission = {
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     .values({
       paypalEventId: event.id,
       eventType: event.event_type,
-      resourceId: event.resource?.id,
+      resourceId: resourceIdOf(event),
       payloadJson: event,
       verified,
     })
