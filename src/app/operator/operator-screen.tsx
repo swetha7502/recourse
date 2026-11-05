@@ -19,6 +19,7 @@ type View = {
     status: string;
     paypalRef: string | null;
   }[];
+  quota: { day: string; limit: number; models: { model: string; calls: number }[] };
 };
 
 const card = "mt-6 rounded-lg border border-border bg-surface p-5";
@@ -117,6 +118,27 @@ export function OperatorScreen() {
         <p className="mt-3 text-xs text-muted">
           Mark paid is a fallback for when PayPal&apos;s paid webhook does not arrive.
         </p>
+      </section>
+
+      <section className={card}>
+        <h2 className="font-medium">Gemini calls today</h2>
+        <p className="mt-1 text-xs text-muted">
+          Free tier: {view.quota.limit} per model per day, resets midnight Pacific ({view.quota.day}).
+          When quota runs out, rulings fall back to rules and are labelled.
+        </p>
+        {view.quota.models.length === 0 && (
+          <p className="mt-2 text-sm text-muted">No calls recorded today.</p>
+        )}
+        <ul className="mt-2 text-sm">
+          {view.quota.models.map(({ model, calls }) => (
+            <li key={model} className="flex justify-between py-0.5">
+              <span>{model}</span>
+              <span className="tabular-nums">
+                {calls} / {view.quota.limit}
+              </span>
+            </li>
+          ))}
+        </ul>
       </section>
 
       {error && (

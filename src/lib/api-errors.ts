@@ -15,7 +15,7 @@ export function apiError(error: unknown): Response {
   }
   if (error instanceof LlmError) {
     console.error(error.message);
-    return Response.json({ error: "The adjudicator is busy, try again" }, { status: 503 });
+    return Response.json({ error: "Could not reach the model, try again" }, { status: 503 });
   }
   console.error(error instanceof Error ? error.message : error);
   return Response.json({ error: "Internal error" }, { status: 500 });

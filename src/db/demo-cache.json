@@ -1,0 +1,91 @@
+[
+  {
+    "key": "json:b69d374d4d5fcf020f13e5aa17f803341bf004846ef5d712dd1646a32cc2c037",
+    "kind": "json",
+    "value": {
+      "item": "hoodie",
+      "size": "M",
+      "color": "black",
+      "measures": [],
+      "quantity": null,
+      "attributes": [
+        "men's",
+        "cotton"
+      ],
+      "maxPriceCents": 4000,
+      "maxDeliveryDays": null
+    }
+  },
+  {
+    "key": "json:03f9011ec06810fad79fa38cd8eca56b4282852f4dde25a6cc3515d143817f58",
+    "kind": "json",
+    "value": {
+      "item": "winter coat",
+      "size": null,
+      "color": null,
+      "measures": [],
+      "quantity": null,
+      "attributes": [
+        "warm",
+        "winter coat",
+        "suitable for temperatures around freezing"
+      ],
+      "maxPriceCents": 12000,
+      "maxDeliveryDays": null
+    }
+  },
+  {
+    "key": "json:bc55d0bc193d3867c3f9e99baab0ea974926df624958cac961333d965d663f65",
+    "kind": "json",
+    "value": {
+      "fault": "WITHIN_INTENT",
+      "checks": [
+        {
+          "name": "Instruction vs. Listing - Warmth",
+          "detail": "The instruction requested a \"warm winter coat suitable for temperatures around freezing.\" The listing describes an \"Insulated Winter Parka with fleece lining and wind-resistant outer shell,\" which reasonably satisfies the warmth requirement.",
+          "passed": true
+        },
+        {
+          "name": "Instruction vs. Listing - Price",
+          "detail": "The instruction requested a coat \"under $120.\" The listing price is $109.99, which satisfies this condition.",
+          "passed": true
+        },
+        {
+          "name": "Instruction vs. Listing - Color",
+          "detail": "The instruction did not specify a color. The listing is for a \"Charcoal\" coat. The agent's choice is not an error as no color was specified.",
+          "passed": false
+        },
+        {
+          "name": "Complaint vs. Listing - Item Mismatch",
+          "detail": "The complaint states, \"I wanted a black coat, but this one is charcoal.\" The listing clearly states the color is \"Charcoal.\" The complaint does not allege that the delivered item differs from the listing's description.",
+          "passed": false
+        }
+      ],
+      "confidence": 1,
+      "explanation": "The shopper's instruction did not specify a color for the coat. The agent selected a \"Charcoal\" coat, which is consistent with the instruction. The complaint expresses a preference for a black coat, which was not part of the original instruction."
+    }
+  },
+  {
+    "key": "agent:61888416a8fbe0835e429299979aa807e318d9e57267c37a1ee111cc7c52f52f",
+    "kind": "agent",
+    "value": {
+      "sku": "HOOD-BLK-M",
+      "steps": [
+        {
+          "args": {
+            "query": "black hoodie"
+          },
+          "tool": "search_catalog"
+        },
+        {
+          "args": {
+            "sku": "HOOD-BLK-M",
+            "quantity": 1
+          },
+          "tool": "purchase"
+        }
+      ],
+      "quantity": 1
+    }
+  }
+]

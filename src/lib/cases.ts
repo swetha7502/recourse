@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { cases, intents, ledger, operators, orders, rulings } from "@/db/schema";
-import { adjudicate } from "./adjudicator";
+import { adjudicateWithFallback } from "./adjudicator";
 import {
   REVIEW_THRESHOLD,
   type Constraints,
@@ -11,7 +11,7 @@ import {
   type Ruling,
   type RulingCheck,
 } from "./domain";
-import { llm } from "./llm";
+import { cachedLlm } from "./llm-cache";
 import { PayPalError, createInvoice, refundCapture, sendInvoice } from "./paypal";
 import { assertValidMandate } from "./purchase";
 
@@ -82,7 +82,7 @@ export async function adjudicateCase(caseId: string): Promise<Ruling> {
   const { theCase, order, intent } = await loadCase(caseId);
   assertValidMandate(intent);
 
-  const ruling = await adjudicate(
+  const { ruling, promptHash } = await adjudicateWithFallback(
     {
       rawInstruction: intent.rawInstruction,
       constraints: intent.constraintsJson as Constraints,
@@ -90,7 +90,7 @@ export async function adjudicateCase(caseId: string): Promise<Ruling> {
     },
     { items: order.itemsJson as OrderItem[], amountCents: order.amountCents },
     theCase.complaint,
-    { llm },
+    cachedLlm,
   );
 
   await db
@@ -103,6 +103,7 @@ export async function adjudicateCase(caseId: string): Promise<Ruling> {
       confidence: ruling.confidence,
       explanation: ruling.explanation,
       checksJson: ruling.checks,
+      promptHash,
     })
     .onConflictDoNothing({ target: rulings.caseId });
 

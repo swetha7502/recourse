@@ -1,9 +1,12 @@
 import { and, desc, eq, like, not } from "drizzle-orm";
 import { getDb } from "@/db";
-import { cases, intents, ledger, operators, orders } from "@/db/schema";
+import { cases, intents, ledger, llmUsage, operators, orders } from "@/db/schema";
 import { getScorecard, PAID_STATUSES } from "./case-view";
 import { CaseError } from "./cases";
+import { quotaDay } from "./llm";
 import { getInvoice, recordInvoicePayment } from "./paypal";
+
+const FREE_TIER_DAILY_LIMIT = 20;
 
 export async function getOperatorView() {
   const db = getDb();
@@ -31,7 +34,14 @@ export async function getOperatorView() {
     )
     .orderBy(desc(ledger.createdAt));
 
-  return { scorecard: await getScorecard(operator.id), invoices };
+  const day = quotaDay();
+  const quota = await db
+    .select({ model: llmUsage.model, calls: llmUsage.calls })
+    .from(llmUsage)
+    .where(eq(llmUsage.day, day))
+    .orderBy(llmUsage.model);
+
+  return { scorecard: await getScorecard(operator.id), invoices, quota: { day, limit: FREE_TIER_DAILY_LIMIT, models: quota } };
 }
 
 export async function setLiabilityAccepted() {

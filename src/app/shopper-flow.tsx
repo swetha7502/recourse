@@ -4,7 +4,13 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { formatCents, type Constraints, type OrderItem } from "@/lib/domain";
 
-type Intent = { id: string; constraints: Constraints; budgetCents: number; operator: string };
+type Intent = {
+  id: string;
+  constraints: Constraints;
+  budgetCents: number;
+  operator: string;
+  parsedBy: "llm" | "rules";
+};
 type Mandate = { confirmedAt: string; signature: string; budgetCents: number };
 type AgentStep = { tool: string; args: Record<string, unknown> };
 type Order = {
@@ -15,7 +21,33 @@ type Order = {
   paypalOrderId: string;
   simulatedAgentError: boolean;
 };
-type Purchase = { summary: string; steps: AgentStep[]; order: Order | null };
+type Purchase = {
+  summary: string;
+  steps: AgentStep[];
+  order: Order | null;
+  mode: "live" | "replayed" | "rules";
+};
+
+const AGENT_MODE_NOTES = {
+  live: null,
+  replayed: "This agent decision was replayed from a saved run to conserve LLM quota.",
+  rules: "The LLM was unavailable, so a rules-based agent made this choice.",
+};
+
+const DEMO_CASES = [
+  {
+    label: "Demo: wrong size",
+    instruction: "Buy a black men's medium cotton hoodie under $40.",
+    complaint: "I asked for medium but this is a large.",
+    simulateError: true,
+  },
+  {
+    label: "Demo: buyer's remorse",
+    instruction: "Buy a warm winter coat suitable for temperatures around freezing, under $120.",
+    complaint: "I wanted a black coat, but this one is charcoal.",
+    simulateError: false,
+  },
+];
 
 async function send<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(path, {
@@ -72,6 +104,12 @@ export function ShopperFlow() {
     }
   }
 
+  function loadDemo(demo: (typeof DEMO_CASES)[number]) {
+    setInstruction(demo.instruction);
+    setComplaint(demo.complaint);
+    setSimulateError(demo.simulateError);
+  }
+
   function submitInstruction(event: FormEvent) {
     event.preventDefault();
     void run("Reading your instruction...", async () => {
@@ -124,15 +162,32 @@ export function ShopperFlow() {
           className="mt-2 w-full rounded-md border border-border bg-background p-2 text-sm"
         />
         {!intent && (
-          <button type="submit" disabled={!instruction.trim() || Boolean(busy)} className={`${primary} mt-3`}>
-            Create intent
-          </button>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button type="submit" disabled={!instruction.trim() || Boolean(busy)} className={primary}>
+              Create intent
+            </button>
+            {DEMO_CASES.map((demo) => (
+              <button
+                key={demo.label}
+                type="button"
+                onClick={() => loadDemo(demo)}
+                className="text-xs text-muted underline"
+              >
+                {demo.label}
+              </button>
+            ))}
+          </div>
         )}
       </form>
 
       {intent && (
         <section className={card}>
           <h2 className="font-medium">Your intent mandate</h2>
+          {intent.parsedBy === "rules" && (
+            <p className="mt-1 text-xs text-warning">
+              Rules-only parse (LLM unavailable). Check these constraints before signing.
+            </p>
+          )}
           <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm">
             {constraintRows(intent.constraints).map(([name, value]) => (
               <div key={name} className="contents">
@@ -205,6 +260,9 @@ export function ShopperFlow() {
               </li>
             ))}
           </ol>
+          {AGENT_MODE_NOTES[purchase.mode] && (
+            <p className="mt-2 text-xs text-warning">{AGENT_MODE_NOTES[purchase.mode]}</p>
+          )}
           {!order && <p className="mt-3 text-sm">{purchase.summary}</p>}
           {item && order && (
             <div className="mt-4 rounded-md bg-background p-3 text-sm">

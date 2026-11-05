@@ -50,7 +50,19 @@ npm run dev
 | `APP_BASE_URL` | Public URL of the app |
 | `SEED_*` | Sandbox personas and the pre-vaulted demo buyer |
 | `ENABLE_TEST_PAGE` | Turns on `/test` in production |
+| `GEMINI_MODELS` | Comma-separated failover order |
 | `AUTO_EXECUTE_MAX_CENTS` | Remedies above this are recommended, not executed (default 10000) |
+
+## Running on the free tier
+
+Recourse runs on Gemini's free tier, which allows 20 requests per model per day, so it rations calls:
+
+- **Replays cost nothing.** Each case keeps one stored ruling, and model outputs are cached by prompt, evidence and schema.
+- **Demo cases use no live calls.** The "Demo:" links replay real model outputs saved in `src/db/demo-cache.json`, and the UI says when an agent decision is replayed.
+- **Quota errors never reach the shopper.** Parsing, the agent and rulings fall back to rules and are labelled, for example "Rules-only (LLM unavailable)". A rules-only guess goes to human review and moves no money. Hard-constraint violations still execute, because they never needed the LLM.
+- **Usage is visible.** The operator view shows calls per model today. Set `GEMINI_MODELS` to change the failover order.
+
+Failover models other than the evaluated one have no eval numbers.
 
 ## Useful commands
 

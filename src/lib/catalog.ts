@@ -36,8 +36,8 @@ export const catalog: CatalogItem[] = [
   { sku: "MUG-4PK", title: "Stoneware Coffee Mugs", variant: "Set of 4", color: "Oat", size: "12 oz", priceCents: 4400, description: "Handmade stoneware mugs, dishwasher safe.", deliveryDays: 6, nearMiss: "MUG-2PK" },
   { sku: "DRSS-PNK-M", title: "Floral Midi Summer Dress", variant: "Medium", color: "Pastel Pink", size: "M", priceCents: 4499, description: "Lightweight floral midi dress for casual outdoor occasions.", deliveryDays: 3, nearMiss: "DRSS-PNK-S" },
   { sku: "DRSS-PNK-S", title: "Floral Midi Summer Dress", variant: "Small", color: "Pastel Pink", size: "S", priceCents: 4499, description: "Lightweight floral midi dress for casual outdoor occasions.", deliveryDays: 3, nearMiss: "DRSS-PNK-M" },
-  { sku: "PARK-CHR-M", title: "Insulated Winter Parka", variant: "Medium", color: "Charcoal", size: "M", priceCents: 10999, description: "Insulated parka with fleece lining and wind-resistant shell.", deliveryDays: 5, nearMiss: "PARK-CHR-L" },
-  { sku: "PARK-CHR-L", title: "Insulated Winter Parka", variant: "Large", color: "Charcoal", size: "L", priceCents: 10999, description: "Insulated parka with fleece lining and wind-resistant shell.", deliveryDays: 5, nearMiss: "PARK-CHR-M" },
+  { sku: "PARK-CHR-M", title: "Insulated Winter Parka", variant: "Medium", color: "Charcoal", size: "M", priceCents: 10999, description: "Insulated winter parka with fleece lining and wind-resistant outer shell.", deliveryDays: 5, nearMiss: "PARK-CHR-L" },
+  { sku: "PARK-CHR-L", title: "Insulated Winter Parka", variant: "Large", color: "Charcoal", size: "L", priceCents: 10999, description: "Insulated winter parka with fleece lining and wind-resistant outer shell.", deliveryDays: 5, nearMiss: "PARK-CHR-M" },
 ];
 
 export const findSku = (sku: string) => catalog.find((item) => item.sku === sku);

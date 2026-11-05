@@ -56,11 +56,11 @@ Render deploy and webhook registration are deferred. Everything below is **unver
 - [ ] `CUSTOMER.DISPUTE.CREATED` payload shape (PayPal publishes no sample)
 - [ ] `VAULT.PAYMENT-TOKEN.CREATED` payload shape (PayPal publishes no sample)
 - [ ] `INVOICING.INVOICE.PAID` payload: `resourceIdOf` in `src/lib/webhooks.ts` finds the invoice id (PayPal publishes no sample; subscribe to this event too)
-- [ ] Invoice flow end to end once Invoicing is enabled on the sandbox app: create, send, operator pays from a second browser profile, panel flips to Recovered
-- [ ] "Mark paid" fallback against a real sent invoice (`recordInvoicePayment` has never had a live call)
+- [ ] Real operator pays an invoice from a second browser profile, and `INVOICING.INVOICE.PAID` flips the panel without Mark paid
 - [ ] `/test` button flow on prod with `ENABLE_TEST_PAGE=true`, then set it back to `false`
 - [ ] Full shopper flow in the browser on the public URL, both demo cases
-- [ ] Set `SEED_OPERATOR_EMAIL` to the real sandbox operator account (`.env.local` has a placeholder)
+- [ ] Set `SEED_OPERATOR_EMAIL` on Render to the real sandbox operator account
+- [ ] Demo cases run with 0 Gemini calls on the seeded production database
 
 ## 3. Fault → money
 
@@ -125,13 +125,21 @@ Built and working locally against sandbox. Render is deferred, so Wed 4 "Live on
 | Wed 4 / Thu 5 | Done locally. Option A. Deploy deferred (see 2b) |
 | Fri 6 | Done. Full buy flow driven through the real UI in a headless browser |
 | Sat 7 | Adjudicator, ablation harness and Case screen done. **Held-out eval still running** (20 Gemini requests per model per day) |
-| Sun 8 | Refund done with real sandbox money. Invoice code written, **blocked by 403 NOT_AUTHORIZED**: Invoicing is not enabled on the sandbox app |
-| Mon 9 | Webhook to ledger and timeline done, tested with local unverified events only. Mark paid untested live |
+| Sun 8 | Refund and invoice both done with real sandbox calls (create, send, record payment). A real operator paying the invoice has not been tried |
+| Mon 9 | Webhook to ledger and timeline done, tested with local unverified events only. Mark paid verified live |
 | Tue 10 | Demo history, reset, README done. Judge credentials and rough video are yours |
 | Wed 11 | Draft in `docs/`. Video, YouTube and Devpost submission are yours |
 
 **Known issues**
-- **Gemini free tier is 20 requests per model per day.** One buy-and-dispute flow uses about 6. Failover across three models gives roughly 10 flows a day, which is thin for judges. Decide before deploy.
+- **Decision: stay on the Gemini free tier and ration quota (20 requests per model per day).** No paid key.
+  - Replays never re-call Gemini: one stored ruling per case, plus a cache keyed on prompt, evidence and schema (`llm_cache`).
+  - Demo cases replay saved real model outputs from `src/db/demo-cache.json`, loaded by the seed. Rehearsal used 0 Gemini calls.
+  - When quota runs out, parsing, the agent and rulings fall back to rules and are labelled. A rules-only guess has 0.6 confidence, so it goes to human review and moves no money. Hard violations still execute, since they never needed the LLM.
+  - Calls per model per day show in the operator view.
+  - `.env.local` sets `GEMINI_MODELS=gemini-3.5-flash` so the app stays off the eval's models. Remove it when the eval finishes.
+- **Held-out eval order:** hybrid first, then rules, then LLM-only with leftover quota over the following days. Prompt frozen at `9d29028f8f`. Do not change it after results.
+- Demo case 2 reuses tuning case 16 (not held-out), so its text is in the repo. The rest of `test_cases.json` stays uncommitted.
+- Demo case 2's agent decision is not captured yet, so it shows the labelled rules-based agent. Capture one real run (about 3 calls) and add it to `demo-cache.json`.
 - Public routes have no auth (reset, purchase, cases). Anyone with the URL can reset the demo or spend Gemini quota. Sandbox money only.
 - Models in the failover chain other than the evaluated one have no eval numbers.
 - `/test` buyer button renders, but approve and capture through it have not been clicked.

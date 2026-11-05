@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { adjudicate } from "../src/lib/adjudicator";
+import { RULES_ONLY_LABEL, adjudicate, adjudicateWithFallback } from "../src/lib/adjudicator";
 import { normalizeSize, runRules } from "../src/lib/adjudicator/rules";
 import type { Constraints, IntentEvidence, OrderEvidence, OrderItem } from "../src/lib/domain";
-import type { Llm } from "../src/lib/llm";
+import { LlmError, type Llm } from "../src/lib/llm";
 
 const constraints = (overrides: Partial<Constraints> = {}): Constraints => ({
   item: "thing",
@@ -119,4 +119,41 @@ test("no refund means a zero amount", async () => {
   assert.equal(ruling.fault, "WITHIN_INTENT");
   assert.equal(ruling.remedy, "NO_REFUND");
   assert.equal(ruling.amountCents, 0);
+});
+
+const outOfQuota: Llm = {
+  ...neverCalled,
+  generateJson: () => Promise.reject(new LlmError("out of quota", 429)),
+};
+
+test("quota failure falls back to a labelled rules-only ruling below the review threshold", async () => {
+  const { ruling, promptHash } = await adjudicateWithFallback(
+    intentOf(constraints()),
+    orderOf(item()),
+    "wrong shade",
+    outOfQuota,
+  );
+  assert.ok(ruling.explanation.startsWith(RULES_ONLY_LABEL));
+  assert.ok(ruling.confidence < 0.7);
+  assert.equal(promptHash, null);
+});
+
+test("a hard violation needs no LLM even when quota is out", async () => {
+  const { ruling, promptHash } = await adjudicateWithFallback(
+    intentOf(constraints({ size: "M" })),
+    orderOf(item({ size: "L" })),
+    "wrong size",
+    outOfQuota,
+  );
+  assert.equal(ruling.fault, "AGENT_ERROR");
+  assert.ok(!ruling.explanation.startsWith(RULES_ONLY_LABEL));
+  assert.ok(promptHash);
+});
+
+test("non-quota errors are not swallowed", async () => {
+  const broken: Llm = { ...neverCalled, generateJson: () => Promise.reject(new Error("bug")) };
+  await assert.rejects(
+    adjudicateWithFallback(intentOf(constraints()), orderOf(item()), "x", broken),
+    /bug/,
+  );
 });

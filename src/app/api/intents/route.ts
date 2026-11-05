@@ -1,7 +1,8 @@
 import { getDb } from "@/db";
 import { buyers, intents, operators } from "@/db/schema";
-import { parseInstruction } from "@/lib/intents";
-import { llm } from "@/lib/llm";
+import { parseInstruction, parseInstructionFallback } from "@/lib/intents";
+import { LlmError } from "@/lib/llm";
+import { cachedLlm } from "@/lib/llm-cache";
 
 const MAX_INSTRUCTION_LENGTH = 500;
 
@@ -22,7 +23,12 @@ export async function POST(request: Request) {
   }
 
   try {
-    const constraints = await parseInstruction(llm, instruction.trim());
+    let parsedBy: "llm" | "rules" = "llm";
+    const constraints = await parseInstruction(cachedLlm, instruction.trim()).catch((error) => {
+      if (!(error instanceof LlmError)) throw error;
+      parsedBy = "rules";
+      return parseInstructionFallback(instruction.trim());
+    });
     const [intent] = await db
       .insert(intents)
       .values({
@@ -38,6 +44,7 @@ export async function POST(request: Request) {
       constraints,
       budgetCents: intent.budgetCents,
       operator: operator.name,
+      parsedBy,
     });
   } catch (error) {
     console.error(error instanceof Error ? error.message : error);

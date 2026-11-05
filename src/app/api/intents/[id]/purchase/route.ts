@@ -14,10 +14,14 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
   if (!intent) return Response.json({ error: "Unknown intent" }, { status: 404 });
 
   try {
-    const { summary, steps, order } = await runShoppingAgent(intent, simulateAgentError === true);
+    const { summary, steps, order, mode } = await runShoppingAgent(
+      intent,
+      simulateAgentError === true,
+    );
     return Response.json({
       summary,
-      steps: steps.map(({ tool, args }) => ({ tool, args })),
+      steps,
+      mode,
       order: order && {
         id: order.id,
         items: order.itemsJson,

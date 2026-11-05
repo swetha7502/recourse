@@ -4,6 +4,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   real,
   text,
   timestamp,
@@ -108,6 +109,7 @@ export const rulings = pgTable("rulings", {
   confidence: real("confidence").notNull(),
   explanation: text("explanation").notNull(),
   checksJson: jsonb("checks_json").notNull(),
+  promptHash: text("prompt_hash"),
   createdAt: createdAt(),
 });
 
@@ -139,3 +141,20 @@ export const webhookEvents = pgTable("webhook_events", {
   processedAt: timestamp("processed_at", { withTimezone: true }),
   processingError: text("processing_error"),
 });
+
+export const llmCache = pgTable("llm_cache", {
+  key: text("key").primaryKey(),
+  kind: text("kind").notNull(),
+  value: jsonb("value").notNull(),
+  createdAt: createdAt(),
+});
+
+export const llmUsage = pgTable(
+  "llm_usage",
+  {
+    day: text("day").notNull(),
+    model: text("model").notNull(),
+    calls: integer("calls").notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.day, table.model] })],
+);

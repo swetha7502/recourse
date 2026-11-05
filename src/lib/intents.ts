@@ -60,6 +60,26 @@ export function parseInstruction(llm: Llm, instruction: string): Promise<Constra
   });
 }
 
+const SIZE_PATTERN = /\b(extra small|extra large|xs|xxl|xl|small|medium|large)\b|\bsize\s+(\d{1,2}(?:\.5)?|xs|xxl|xl|s|m|l)\b/i;
+const COLOR_PATTERN = /\b(black|white|gray|grey|charcoal|navy|blue|red|green|olive|pink|silver|brown)\b/i;
+const PRICE_PATTERN = /(?:under|below|less than|max(?:imum)?|up to|at most)\s*\$\s*(\d+(?:\.\d{1,2})?)/i;
+
+// Used only when Gemini is out of quota: exact facts only, nothing inferred.
+export function parseInstructionFallback(instruction: string): Constraints {
+  const price = instruction.match(PRICE_PATTERN);
+  const size = instruction.match(SIZE_PATTERN);
+  return {
+    item: instruction.slice(0, 80),
+    maxPriceCents: price ? Math.round(Number(price[1]) * 100) : null,
+    size: size ? (size[1] ?? size[2]) : null,
+    color: instruction.match(COLOR_PATTERN)?.[1] ?? null,
+    quantity: null,
+    maxDeliveryDays: null,
+    measures: [],
+    attributes: [],
+  };
+}
+
 export type SignedFields = {
   intentId: string;
   buyerId: string;
@@ -70,7 +90,7 @@ export type SignedFields = {
   confirmedAt: string;
 };
 
-function canonicalize(value: unknown): unknown {
+export function canonicalize(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value && typeof value === "object") {
     return Object.fromEntries(

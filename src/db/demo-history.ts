@@ -1,7 +1,18 @@
 import { like } from "drizzle-orm";
 import type { Constraints, Fault, Remedy } from "@/lib/domain";
+import demoCache from "./demo-cache.json";
 import { getDb } from "./index";
-import { buyers, cases, intents, ledger, operators, orders, rulings, webhookEvents } from "./schema";
+import {
+  buyers,
+  cases,
+  intents,
+  ledger,
+  llmCache,
+  operators,
+  orders,
+  rulings,
+  webhookEvents,
+} from "./schema";
 
 const DEMO_PREFIX = "DEMO-";
 
@@ -24,8 +35,14 @@ const HISTORY: { item: string; cents: number; fault: Fault; remedy: Remedy; note
   { item: "Waterproof Hiking Jacket", cents: 7999, fault: "MERCHANT_MISMATCH", remedy: "FULL_REFUND_MERCHANT_ABSORBS", note: "Listing promised waterproof; the jacket leaked." },
 ];
 
+// Real model outputs saved from earlier runs, so the demo script needs no live Gemini calls.
+export async function seedDemoCache() {
+  await getDb().insert(llmCache).values(demoCache).onConflictDoNothing();
+}
+
 export async function seedDemoHistory() {
   const db = getDb();
+  await seedDemoCache();
   const [existing] = await db.select().from(orders).where(like(orders.paypalOrderId, `${DEMO_PREFIX}%`));
   if (existing) return;
 

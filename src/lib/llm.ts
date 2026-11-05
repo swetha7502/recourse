@@ -1,3 +1,7 @@
+import { sql } from "drizzle-orm";
+import { getDb } from "../db";
+import { llmUsage } from "../db/schema";
+
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 // Free-tier quotas are per model per day, so the app falls through this list when one runs out.
 const DEFAULT_MODELS = ["gemini-2.5-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"];
@@ -66,6 +70,29 @@ function retryDelayMs(body: GeminiResponse, attempt: number): number {
 
 const exhaustedUntil = new Map<string, number>();
 
+// Gemini's daily quota resets at midnight Pacific.
+export const quotaDay = () =>
+  new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
+
+async function recordUsage(model: string) {
+  try {
+    await getDb()
+      .insert(llmUsage)
+      .values({ day: quotaDay(), model, calls: 1 })
+      .onConflictDoUpdate({
+        target: [llmUsage.day, llmUsage.model],
+        set: { calls: sql`${llmUsage.calls} + 1` },
+      });
+  } catch (error) {
+    console.warn("[llm] usage not recorded:", error instanceof Error ? error.message : error);
+  }
+}
+
+function configuredModels(): string[] {
+  const list = process.env.GEMINI_MODELS?.split(",").map((m) => m.trim()).filter(Boolean);
+  return list?.length ? list : DEFAULT_MODELS;
+}
+
 function isDailyQuota(body: GeminiResponse): boolean {
   return Boolean(
     body.error?.details?.some((d) => d.violations?.some((v) => v.quotaId?.includes("PerDay"))),
@@ -76,7 +103,7 @@ async function generate(body: Record<string, unknown>): Promise<GeminiContent> {
   const pinned = process.env.GEMINI_MODEL;
   const models = pinned
     ? [pinned]
-    : DEFAULT_MODELS.filter((m) => (exhaustedUntil.get(m) ?? 0) < Date.now());
+    : configuredModels().filter((m) => (exhaustedUntil.get(m) ?? 0) < Date.now());
   if (!models.length) throw new LlmError("All Gemini models are out of daily quota", 429);
 
   for (const [index, model] of models.entries()) {
@@ -110,6 +137,7 @@ async function generateWith(
     const parsed = (await res.json().catch(() => ({}))) as GeminiResponse;
 
     if (res.ok) {
+      await recordUsage(model);
       const content = parsed.candidates?.[0]?.content;
       if (!content?.parts?.length) {
         throw new LlmError(
@@ -160,7 +188,11 @@ export const llm: Llm = {
         responseSchema: schema,
       },
     });
-    return JSON.parse(textOf(content)) as T;
+    try {
+      return JSON.parse(textOf(content)) as T;
+    } catch {
+      throw new LlmError("Gemini returned malformed JSON", 0);
+    }
   },
 
   async runTools({ system, prompt, tools, maxTurns = 8 }) {
