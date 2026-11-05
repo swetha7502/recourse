@@ -9,10 +9,18 @@ Hackathon prototype, under active development. PayPal **sandbox only**.
 ```bash
 npm install
 cp .env.example .env.local   # then fill in the values
+docker compose up -d         # Postgres on localhost:5433
+npm run db:migrate
+npm run db:seed
 npm run dev
 ```
 
-`GET /api/health` reports whether the app is up.
+- `GET /api/health` reports whether the app is up.
+- `/test` exercises sandbox checkout and a simulated agent charge. In production it is off unless `ENABLE_TEST_PAGE=true`.
+- `POST /api/webhooks/paypal` receives PayPal webhooks. Production rejects events until `PAYPAL_WEBHOOK_ID` is set.
+- `npm run spike:vault` reruns the Vault spike.
+
+The vaulted, no-buyer charge is proven in PayPal **sandbox only**. In production, PayPal requires a merchant to be approved for reference transactions to save PayPal as a payment source. We have not applied for this.
 
 ## Honesty notes
 
