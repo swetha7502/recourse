@@ -137,6 +137,18 @@ async function main() {
   const selected = cases.filter((c) => TUNE_IDS.has(c.id) === (set === "tune"));
 
   const summary: Record<string, ReturnType<typeof summarize>> = {};
+  const save = () => {
+    mkdirSync("eval-results", { recursive: true });
+    writeFileSync(
+      join("eval-results", `${set}.json`),
+      JSON.stringify(
+        { set, model: model(), prompt: hash(ADJUDICATOR_SYSTEM), cases: selected.length, summary },
+        null,
+        2,
+      ) + "\n",
+    );
+  };
+
   for (const mode of modes) {
     const results: Result[] = [];
     for (const testCase of selected) {
@@ -145,6 +157,7 @@ async function main() {
     }
     console.log(` ${mode}`);
     summary[mode] = summarize(results);
+    save();
 
     if (process.argv.includes("--show-failures")) {
       for (const failure of results.filter((r) => r.ruling.fault !== r.expected)) {
@@ -155,22 +168,15 @@ async function main() {
     }
   }
 
-  mkdirSync("eval-results", { recursive: true });
-  writeFileSync(
-    join("eval-results", `${set}.json`),
-    JSON.stringify(
-      { set, model: model(), prompt: hash(ADJUDICATOR_SYSTEM), cases: selected.length, summary },
-      null,
-      2,
-    ) + "\n",
-  );
   for (const [mode, s] of Object.entries(summary)) {
     const faults = FAULTS.map((f) => `${f} ${s.perFault[f].correct}/${s.perFault[f].total}`).join("  ");
     console.log(`${mode.padEnd(7)} ${s.correct}/${s.total} (${(s.accuracy * 100).toFixed(0)}%)  ${faults}  review=${s.flaggedForReview}`);
   }
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
-  process.exitCode = 1;
-});
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error instanceof Error ? error.message : error);
+    process.exit(1);
+  });

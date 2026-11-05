@@ -1,4 +1,5 @@
 import { loadEnvConfig } from "@next/env";
+import { eq } from "drizzle-orm";
 import { getDb } from "./index";
 import { seedDemoHistory } from "./demo-history";
 import { buyers, merchants, operators, vaultedPaymentMethods } from "./schema";
@@ -21,14 +22,16 @@ async function main() {
     .onConflictDoNothing({ target: merchants.paypalEmail });
 
   const operatorEmail = required("SEED_OPERATOR_EMAIL");
-  await db
-    .insert(operators)
-    .values({
+  const [operator] = await db.select().from(operators).limit(1);
+  if (operator) {
+    await db.update(operators).set({ paypalEmail: operatorEmail }).where(eq(operators.id, operator.id));
+  } else {
+    await db.insert(operators).values({
       name: "Errand Agent Co.",
       paypalEmail: operatorEmail,
       liabilityAcceptedAt: new Date(),
-    })
-    .onConflictDoNothing({ target: operators.paypalEmail });
+    });
+  }
 
   const buyerEmail = required("SEED_BUYER_EMAIL");
   const [buyer] = await db
