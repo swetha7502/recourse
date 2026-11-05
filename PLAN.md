@@ -45,6 +45,16 @@ Deadline: **Thu Nov 12, 3:00 PM ET** · Target submit: **10:00 AM ET**
 - **Production needs approval.** PayPal's docs state a merchant must be approved for reference transactions to save PayPal as a payment source (via their account manager). We have not applied, and approval is not guaranteed.
 - PayPal's docs also carry a "Don't save PayPal as a payment method during purchase" callout that conflicts with their own sample. It did not block the sandbox flow; production should follow their best-practices guide.
 
+## 2b. Deploy-day checklist (verify once Render is up)
+Render deploy and webhook registration are deferred. Everything below is **unverified until deploy**.
+- [ ] Render Blueprint deploys; `/api/health` returns 200 on the public URL
+- [ ] Register webhook at `<render-url>/api/webhooks/paypal`; save the Webhook ID as `PAYPAL_WEBHOOK_ID`
+- [ ] Signed webhook delivery from a real order lands with `verified=true` in `webhook_events` (simulator events cannot be verified)
+- [ ] `PAYMENT.CAPTURE.REFUNDED` payload: `captureIdFromLinks` in `src/lib/webhooks.ts` finds the capture id (PayPal publishes no sample)
+- [ ] `CUSTOMER.DISPUTE.CREATED` payload shape (PayPal publishes no sample)
+- [ ] `VAULT.PAYMENT-TOKEN.CREATED` payload shape (PayPal publishes no sample)
+- [ ] `/test` button flow on prod with `ENABLE_TEST_PAGE=true`, then set it back to `false`
+
 ## 3. Fault → money
 
 | Ruling | Example | Money movement |
