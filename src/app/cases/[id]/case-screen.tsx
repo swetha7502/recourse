@@ -160,7 +160,7 @@ export function CaseScreen({ id }: { id: string }) {
           <p className={`mt-2 text-lg font-semibold ${TONES[panel.tone]}`}>{panel.headline}</p>
           <p className="text-sm">{panel.detail}</p>
           <p className="mt-3 text-xs text-muted">
-            Typical chargeback cost this replaces: est. $20–100 per dispute. No dispute was filed.
+            Typical chargeback cost this replaces: est. $20–100 per dispute (industry estimate, Chargebacks911). No dispute was filed.
           </p>
         </section>
       )}

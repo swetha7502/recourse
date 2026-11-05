@@ -28,9 +28,11 @@ Deadline: **Thu Nov 12, 3:00 PM ET** · Target submit: **10:00 AM ET**
 
 ## 1b. Impact framing (use in README, video, Devpost)
 - **Problem today:** liability for agent mistakes lands on whoever is least able to fight it.
-  - Shoppers: Target's terms treat agent purchases as "transactions authorized by you" — shopper pays even for agent errors. (emarketer.com, Target terms)
-  - Small merchants: no rule assigns fault for agent-made purchases, so merchants pay by default. (chargeflow.io) Chargeback fees $20–100 per dispute. (basistheory.com / Chargebacks911 CTO)
-  - Six banks' principles paper: "liability should follow wherever the error entered the transaction." (FIDO Alliance summary)
+  - Shoppers: Target's terms say "Purchases and other actions taken by an Approved Agent that you have authorized are considered transactions authorized by you." Applies only to Target's Approved Agents; Target also says it will evaluate such disputes on permissions and evidence. **Verified verbatim** at target.com/c/terms-conditions (updated Sept 10, 2026). Do not say this covers all agents, or that the shopper always pays.
+  - Small merchants: "no rule assigns fault among consumer, AI provider, and merchant ... so merchants pay by default." Chargeflow blog (chargeflow.io/blog/ai-agent-chargeback-liability), a vendor with an interest; attribute it as Chargeflow's view.
+  - Chargeback fees: $20-100 per dispute is a common **vendor estimate** (chargebacks911.com/chargeback-management/chargeback-fees); others say $15-100. Always say "est."
+  - Six banks (ASB, Bank of America, Capital One, Commonwealth Bank, ING, NatWest), *Building Trust in Agentic Commerce*, Sept 22, 2026: "liability outcomes reflecting where risks and errors are introduced", as quoted by CX Network. Voluntary and non-binding. **Replaces the earlier wording, which was not a real quote.** Not read at the paper itself; one Forkast piece says it does not allocate liability, so call it a principle, not a rule.
+  - Not found at primary sources: any Visa or Mastercard liability statement for agents. Chargeflow names an Amex "Agent Purchase Protection"; unverified, and worth checking before claiming nobody else covers this.
 - **Audience:** small PayPal merchants receiving agent orders (primary); shoppers (secondary).
 - **Why it scales:** the operator scorecard turns rulings into a cost signal, so error-prone agents cost their operators more.- **Verify every source at its primary page before using it.** If you can't find the primary wording, cut the claim.
 
@@ -114,6 +116,26 @@ Render deploy and webhook registration are deferred. Everything below is **unver
 
 **Base plan:** one loop (intent → buy → adjudicate → refund) + ledger + ablation + protection panel + scorecard. **Real invoice is a bonus**; if not done, ledger shows operator share as "invoice pending".
 **Cut order:** Agent Toolkit → real invoice → Vault (Option B) → scorecard. Never cut the protection panel — it carries Impact.
+
+## 7b. Status (night of Wed Nov 4)
+Built and working locally against sandbox. Render is deferred, so Wed 4 "Live on Render" is **not** met.
+
+| Row | State |
+|---|---|
+| Wed 4 / Thu 5 | Done locally. Option A. Deploy deferred (see 2b) |
+| Fri 6 | Done. Full buy flow driven through the real UI in a headless browser |
+| Sat 7 | Adjudicator, ablation harness and Case screen done. **Held-out eval still running** (20 Gemini requests per model per day) |
+| Sun 8 | Refund done with real sandbox money. Invoice code written, **blocked by 403 NOT_AUTHORIZED**: Invoicing is not enabled on the sandbox app |
+| Mon 9 | Webhook to ledger and timeline done, tested with local unverified events only. Mark paid untested live |
+| Tue 10 | Demo history, reset, README done. Judge credentials and rough video are yours |
+| Wed 11 | Draft in `docs/`. Video, YouTube and Devpost submission are yours |
+
+**Known issues**
+- **Gemini free tier is 20 requests per model per day.** One buy-and-dispute flow uses about 6. Failover across three models gives roughly 10 flows a day, which is thin for judges. Decide before deploy.
+- Public routes have no auth (reset, purchase, cases). Anyone with the URL can reset the demo or spend Gemini quota. Sandbox money only.
+- Models in the failover chain other than the evaluated one have no eval numbers.
+- `/test` buyer button renders, but approve and capture through it have not been clicked.
+- Only one buyer token is seeded; it is reused for every agent purchase.
 
 ## 8. Demo video (~2:50)
 - 0:00–0:20 — Problem: "Today, when an AI agent buys the wrong thing, the shopper or the small merchant pays." Introduce one small merchant by name (fictional shop).- 0:20–0:55 — Intent mandate (buyer pre-vaulted) → agent buys on its own

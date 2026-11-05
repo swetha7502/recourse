@@ -2,7 +2,32 @@
 
 Today, when an AI shopping agent makes a mistake, the shopper or the small merchant pays. Recourse makes the party that caused the error pay: the merchant refunds the buyer and the agent operator is invoiced, all on PayPal.
 
-Hackathon prototype, under active development. PayPal **sandbox only**.
+Hackathon prototype. PayPal **sandbox only**: no real money moves.
+
+## How it works
+
+1. **Mandate.** The shopper describes what to buy. Recourse parses it into constraints and a budget, and the shopper signs it once.
+2. **Purchase.** A simulated shopping agent searches a mock catalog and buys on the shopper's saved PayPal with no further approval. Recourse checks the mandate before every charge.
+3. **Complaint.** If something is wrong, the shopper opens a case.
+4. **Ruling.** A hybrid adjudicator assigns fault. Rules decide hard constraints (price, size, quantity, delivery, numeric specs). An LLM judges fuzzy ones (color synonyms, style, compatibility) and cannot override a failed hard check.
+5. **Remedy.** Money moves according to the ruling.
+
+| Ruling | Meaning | Money |
+|---|---|---|
+| `AGENT_ERROR` | The agent bought something outside the mandate | Merchant refunds buyer, operator is invoiced |
+| `MERCHANT_MISMATCH` | The item differs from its listing | Merchant refunds buyer and absorbs the cost |
+| `WITHIN_INTENT` | The item matches the mandate | No refund |
+
+Rulings below 70% confidence are flagged for human review and nothing executes.
+
+## Eval
+
+Ablation on 30 labelled cases, tuned on 10 and reported on 20 held-out cases never used for tuning. Results live in [eval-results/](eval-results/).
+
+<!-- Fill in from eval-results/holdout.json when the held-out run finishes. -->
+Held-out results: pending.
+
+The dataset (`test_cases.json`) is not in this repo.
 
 ## Local setup
 
@@ -15,12 +40,27 @@ npm run db:seed
 npm run dev
 ```
 
-- `GET /api/health` reports whether the app is up.
-- `/test` exercises sandbox checkout and a simulated agent charge. In production it is off unless `ENABLE_TEST_PAGE=true`.
-- `POST /api/webhooks/paypal` receives PayPal webhooks. Production rejects events until `PAYPAL_WEBHOOK_ID` is set.
+| Variable | Purpose |
+|---|---|
+| `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET` | Sandbox app; needs Vault and Invoicing enabled |
+| `PAYPAL_WEBHOOK_ID` | Required in production, or webhooks are rejected |
+| `GEMINI_API_KEY` | Google AI Studio key |
+| `DATABASE_URL` | Postgres connection string |
+| `INTENT_SIGNING_KEY` | Secret for signing mandates |
+| `APP_BASE_URL` | Public URL of the app |
+| `SEED_*` | Sandbox personas and the pre-vaulted demo buyer |
+| `ENABLE_TEST_PAGE` | Turns on `/test` in production |
+| `AUTO_EXECUTE_MAX_CENTS` | Remedies above this are recommended, not executed (default 10000) |
+
+## Useful commands
+
+- `npm test` runs the rule and adjudicator unit tests.
+- `GEMINI_MODEL=gemini-2.5-flash npm run eval -- --set tune` runs the eval. It needs `test_cases.json`, and results cache in `.eval-cache/`.
 - `npm run spike:vault` reruns the Vault spike.
 
-The vaulted, no-buyer charge is proven in PayPal **sandbox only**. In production, PayPal requires a merchant to be approved for reference transactions to save PayPal as a payment source. We have not applied for this.
+## Stack
+
+Next.js, TypeScript, Tailwind, Drizzle, Postgres, Google Gemini, and PayPal Orders v2, Vault, Payments v2 refunds, Invoicing v2 and Webhooks. Hosted on Render.
 
 ## Honesty notes
 
@@ -28,6 +68,10 @@ The vaulted, no-buyer charge is proven in PayPal **sandbox only**. In production
 - PayPal holds the payment method; **Recourse enforces the mandate**, not PayPal.
 - The intent record is signed with a server key: **tamper-evident (prototype)**.
 - Merchant credentials live in env vars. Production would use PayPal partner permissions; we did not build partner onboarding.
+- Saving PayPal and charging with no buyer present is proven in **sandbox only**. In production, PayPal requires a merchant to be approved for reference transactions. We have not applied for this.
+- The demo's agent error is **injected on request** and labelled in the UI, because a well-prompted agent usually picks correctly. The adjudicator never sees that flag.
+- Scorecard figures are **demo data**. A handful of seeded rulings proves nothing about real error rates.
+- The chargeback cost shown is an industry estimate, not a fee avoided. No dispute is filed.
 
 ## License
 
