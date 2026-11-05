@@ -7,7 +7,7 @@ Deadline: **Thu Nov 12, 3:00 PM ET** · Target submit: **10:00 AM ET**
 ## 1. Scope (locked)
 **Build:**
 - Intent mandate: user approves intent + budget once, saves PayPal (Vault); agent buys without per-order approval
-- Simulated shopping agent (Claude tool use) over a mock catalog
+- Simulated shopping agent (Gemini function calling) over a mock catalog
 - Signed intent record (tamper-evident, prototype)
 - Hybrid adjudicator (rules + LLM)
 - Remedies: Refunds API; one real invoice merchant → operator (Invoicing API)
@@ -53,7 +53,12 @@ Render deploy and webhook registration are deferred. Everything below is **unver
 - [ ] `PAYMENT.CAPTURE.REFUNDED` payload: `captureIdFromLinks` in `src/lib/webhooks.ts` finds the capture id (PayPal publishes no sample)
 - [ ] `CUSTOMER.DISPUTE.CREATED` payload shape (PayPal publishes no sample)
 - [ ] `VAULT.PAYMENT-TOKEN.CREATED` payload shape (PayPal publishes no sample)
+- [ ] `INVOICING.INVOICE.PAID` payload: `resourceIdOf` in `src/lib/webhooks.ts` finds the invoice id (PayPal publishes no sample; subscribe to this event too)
+- [ ] Invoice flow end to end once Invoicing is enabled on the sandbox app: create, send, operator pays from a second browser profile, panel flips to Recovered
+- [ ] "Mark paid" fallback against a real sent invoice (`recordInvoicePayment` has never had a live call)
 - [ ] `/test` button flow on prod with `ENABLE_TEST_PAGE=true`, then set it back to `false`
+- [ ] Full shopper flow in the browser on the public URL, both demo cases
+- [ ] Set `SEED_OPERATOR_EMAIL` to the real sandbox operator account (`.env.local` has a placeholder)
 
 ## 3. Fault → money
 
@@ -63,6 +68,8 @@ Render deploy and webhook registration are deferred. Everything below is **unver
 | `MERCHANT_MISMATCH` | Listing says navy, item is blue | Merchant refunds buyer, absorbs cost |
 | `WITHIN_INTENT` | Item matches intent; buyer changed mind | No refund; explanation + standard return policy |
 | confidence < 0.7 | any | Flag for human review, no auto-execution |
+
+**Human-review override (not built).** There is one ruling per case (unique `rulings.case_id`, cached by case id). An override plugs in at `adjudicateCase` in `src/lib/cases.ts`, where a `NEEDS_REVIEW` case stops: a reviewer action would write a second record (for example a `ruling_overrides` table so the original ruling stays auditable), then call `executeRemedy`. `executeRemedy` already refuses `NEEDS_REVIEW` cases.
 
 ## 4. Core flow
 1. User types instruction → agent parses into constraints → **intent card** (constraints + budget) → user confirms + vaults PayPal.
