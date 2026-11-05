@@ -40,6 +40,11 @@ Deadline: **Thu Nov 12, 3:00 PM ET** · Target submit: **10:00 AM ET**
   per-order PayPal approval; demo case = approval screen shows title + total but the agent picked the wrong variant (size L vs M).
 - Verify in docs: "Save PayPal" via Orders v2 (`payment_source.paypal.attributes.vault`), then reuse via `vault_id`. Sandbox app may need the vaulting feature enabled in app settings.
 
+**Decision (Wed Nov 4, 8:20 PM ET): Option A.** Spike passed in ~7 minutes (`npm run spike:vault`): a $10.00 order with `store_in_vault: ON_SUCCESS` returned `VAULTED` on capture, then a server-created $7.50 order using `vault_id` returned `COMPLETED` in one call with no buyer approval (debug_id `f271835d1c8c6`).
+- **Sandbox only.** This proves the flow in PayPal sandbox, not in production. Say so in the README, pitch and video.
+- **Production needs approval.** PayPal's docs state a merchant must be approved for reference transactions to save PayPal as a payment source (via their account manager). We have not applied, and approval is not guaranteed.
+- PayPal's docs also carry a "Don't save PayPal as a payment method during purchase" callout that conflicts with their own sample. It did not block the sandbox flow; production should follow their best-practices guide.
+
 ## 3. Fault → money
 
 | Ruling | Example | Money movement |
