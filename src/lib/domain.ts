@@ -47,7 +47,7 @@ export type OrderItem = {
   size: string;
   priceCents: number;
   description: string;
-  quantity: number;
+  quantity?: number;
   deliveryDays?: number;
 };
 
