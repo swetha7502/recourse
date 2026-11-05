@@ -9,7 +9,8 @@
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed": "tsx src/db/seed.ts"
+    "db:seed": "tsx src/db/seed.ts",
+    "spike:vault": "tsx scripts/vault-spike.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.4",
