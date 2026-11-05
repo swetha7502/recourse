@@ -1,8 +1,9 @@
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 // Free-tier quotas are per model per day, so the app falls through this list when one runs out.
-const DEFAULT_MODELS = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-3.5-flash-lite"];
+const DEFAULT_MODELS = ["gemini-2.5-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"];
 const EXHAUSTED_COOLDOWN_MS = 60 * 60_000;
 const MAX_ATTEMPTS = 6;
+const REQUEST_TIMEOUT_MS = 45_000;
 const RETRYABLE = new Set([429, 500, 503]);
 
 export type JsonSchema = Record<string, unknown>;
@@ -99,6 +100,12 @@ async function generateWith(
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    }).catch((error: Error) => {
+      if (error.name !== "TimeoutError" || attempt + 1 >= MAX_ATTEMPTS) {
+        throw new LlmError(`Gemini request failed: ${error.message}`, 0);
+      }
+      return new Response("{}", { status: 503 });
     });
     const parsed = (await res.json().catch(() => ({}))) as GeminiResponse;
 

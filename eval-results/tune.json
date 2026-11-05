@@ -1,0 +1,63 @@
+{
+  "set": "tune",
+  "model": "gemini-2.5-flash",
+  "prompt": "9d29028f8f",
+  "cases": 10,
+  "summary": {
+    "rules": {
+      "correct": 8,
+      "total": 10,
+      "accuracy": 0.8,
+      "perFault": {
+        "AGENT_ERROR": {
+          "correct": 2,
+          "total": 2
+        },
+        "MERCHANT_MISMATCH": {
+          "correct": 2,
+          "total": 4
+        },
+        "WITHIN_INTENT": {
+          "correct": 4,
+          "total": 4
+        }
+      },
+      "flaggedForReview": 8,
+      "failures": [
+        {
+          "id": 9,
+          "expected": "MERCHANT_MISMATCH",
+          "got": "WITHIN_INTENT",
+          "confidence": 0.6
+        },
+        {
+          "id": 29,
+          "expected": "MERCHANT_MISMATCH",
+          "got": "WITHIN_INTENT",
+          "confidence": 0.6
+        }
+      ]
+    },
+    "hybrid": {
+      "correct": 10,
+      "total": 10,
+      "accuracy": 1,
+      "perFault": {
+        "AGENT_ERROR": {
+          "correct": 2,
+          "total": 2
+        },
+        "MERCHANT_MISMATCH": {
+          "correct": 4,
+          "total": 4
+        },
+        "WITHIN_INTENT": {
+          "correct": 4,
+          "total": 4
+        }
+      },
+      "flaggedForReview": 0,
+      "failures": []
+    }
+  }
+}
