@@ -69,7 +69,7 @@ The shopping agent is simulated, and the demo's agent error is injected on reque
 
 ## Links
 
-- Demo: [RENDER URL]
+- Demo: https://recourse-zp67.onrender.com
 - Video: [YOUTUBE URL]
 - Code: https://github.com/swetha7502/recourse
 - Sandbox test credentials: [JUDGE CREDENTIALS]
