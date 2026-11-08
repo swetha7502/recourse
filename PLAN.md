@@ -48,19 +48,22 @@ Deadline: **Thu Nov 12, 3:00 PM ET** · Target submit: **10:00 AM ET**
 - PayPal's docs also carry a "Don't save PayPal as a payment method during purchase" callout that conflicts with their own sample. It did not block the sandbox flow; production should follow their best-practices guide.
 
 ## 2b. Deploy-day checklist (verify once Render is up)
-Render deploy and webhook registration are deferred. Everything below is **unverified until deploy**.
-- [ ] Render Blueprint deploys; `/api/health` returns 200 on the public URL
-- [ ] Register webhook at `<render-url>/api/webhooks/paypal`; save the Webhook ID as `PAYPAL_WEBHOOK_ID`
-- [ ] Signed webhook delivery from a real order lands with `verified=true` in `webhook_events` (simulator events cannot be verified)
-- [ ] `PAYMENT.CAPTURE.REFUNDED` payload: `captureIdFromLinks` in `src/lib/webhooks.ts` finds the capture id (PayPal publishes no sample)
-- [ ] `CUSTOMER.DISPUTE.CREATED` payload shape (PayPal publishes no sample)
-- [ ] `VAULT.PAYMENT-TOKEN.CREATED` payload shape (PayPal publishes no sample)
-- [ ] `INVOICING.INVOICE.PAID` payload: `resourceIdOf` in `src/lib/webhooks.ts` finds the invoice id (PayPal publishes no sample; subscribe to this event too)
-- [ ] Real operator pays an invoice from a second browser profile, and `INVOICING.INVOICE.PAID` flips the panel without Mark paid
-- [ ] `/test` button flow on prod with `ENABLE_TEST_PAGE=true`, then set it back to `false`
-- [ ] Full shopper flow in the browser on the public URL, both demo cases
-- [ ] Set `SEED_OPERATOR_EMAIL` on Render to the real sandbox operator account
-- [ ] Demo cases run with 0 Gemini calls on the seeded production database
+Production: https://recourse-zp67.onrender.com (Render free plans). Verified Nov 8.
+- [x] Render Blueprint deploys; `/api/health` returns 200 and reports the deployed commit
+- [x] Webhook registered at `/api/webhooks/paypal` with all 7 events. The first registration missed the path; fixed
+- [x] Signed delivery verified in prod for `PAYMENT.CAPTURE.COMPLETED`, `PAYMENT.CAPTURE.REFUNDED` and `INVOICING.INVOICE.PAID` ("Signature verified" on the case timeline)
+- [x] `PAYMENT.CAPTURE.REFUNDED` real payload: `resource.id` is the refund, `links[rel=up]` is `/v2/payments/captures/{id}`. Matches `captureIdFromLinks`
+- [x] `PAYMENT.CAPTURE.COMPLETED` real payload: `supplementary_data.related_ids.order_id` present. Matches the handler
+- [x] `INVOICING.INVOICE.PAID` real payload: id at `resource.invoice.id`. Also fires for a recorded payment, with `invoice.status` `MARKED_AS_PAID`; the handler now maps that to `PAID_MANUAL`
+- [ ] `CUSTOMER.DISPUTE.CREATED`: needs a sandbox buyer to file a dispute (buyer login). Handler only stores the event
+- [ ] `VAULT.PAYMENT-TOKEN.CREATED`: needs a buyer to approve a new vaulted order (buyer login). Handler only stores the event
+- [ ] `PAYMENT.CAPTURE.DECLINED` / `DENIED`: not triggerable in sandbox without negative testing. Handler untested against a real payload
+- [ ] Real operator pays an invoice from a second browser profile (Mark paid path verified instead). Open prod invoice for this: `INV2-LY5Y-DTXS-KEJM-R67A` (case `dcc6b6d7`). Reset demo data deletes the case, so pay it first
+- [ ] `/test` button flow on prod: not needed by judges, so `ENABLE_TEST_PAGE` stays `false`
+- [x] Full shopper flow in the browser on the public URL, both demo cases: 30-32s warm, 65.8s from a sleeping server
+- [x] Cold start: "waking up" message appears at 8.5s and the first request after sleep finishes in 37.4s; friendly 503 message renders
+- [x] `SEED_OPERATOR_EMAIL` on Render is a real sandbox account (invoices create and send)
+- [x] Demo cases run with 0 Gemini calls on the seeded production database
 
 ## 3. Fault → money
 
@@ -117,18 +120,18 @@ Render deploy and webhook registration are deferred. Everything below is **unver
 **Base plan:** one loop (intent → buy → adjudicate → refund) + ledger + ablation + protection panel + scorecard. **Real invoice is a bonus**; if not done, ledger shows operator share as "invoice pending".
 **Cut order:** Agent Toolkit → real invoice → Vault (Option B) → scorecard. Never cut the protection panel — it carries Impact.
 
-## 7b. Status (night of Wed Nov 4)
-Built and working locally against sandbox. Render is deferred, so Wed 4 "Live on Render" is **not** met.
+## 7b. Status (Sun Nov 8)
+Live at https://recourse-zp67.onrender.com on Render free plans, against PayPal sandbox.
 
 | Row | State |
 |---|---|
-| Wed 4 / Thu 5 | Done locally. Option A. Deploy deferred (see 2b) |
+| Wed 4 / Thu 5 | Done. Option A. Live on Render; signed webhooks verified in prod (see 2b) |
 | Fri 6 | Done. Full buy flow driven through the real UI in a headless browser |
 | Sat 7 | Done. Held-out: hybrid 20/20, LLM-only 20/20, rules-only 12/20. **No hybrid accuracy gain**; see README |
-| Sun 8 | Refund and invoice both done with real sandbox calls (create, send, record payment). A real operator paying the invoice has not been tried |
-| Mon 9 | Webhook to ledger and timeline done, tested with local unverified events only. Mark paid verified live |
-| Tue 10 | Demo history, reset, README, judge section done. Render free blueprint rehearsed on a clean clone. Deploy waits on you |
-| Wed 11 | Draft in `docs/`. Video, YouTube and Devpost submission are yours |
+| Sun 8 | Done in prod: refund, invoice create and send, Mark paid. A real operator payment from PayPal has not been tried |
+| Mon 9 | Done. Real signed refund and invoice-paid webhooks update the ledger and panel in prod |
+| Tue 10 | Done. Demo history, reset, README and judge section. No judge login needed |
+| Wed 11 | Devpost draft and demo script in `docs/`. Video, YouTube and Devpost submission are yours |
 
 **Known issues**
 - **Decision: stay on the Gemini free tier and ration quota (20 requests per model per day).** No paid key.
@@ -144,7 +147,8 @@ Built and working locally against sandbox. Render is deferred, so Wed 4 "Live on
 - **Before the database expires** (30 days after deploy), if judging is still open: delete it in Render and re-sync the Blueprint. A new free database is created and startCommand migrates and reseeds it. This loses case history only. The paid alternative is `basic-256mb`, whose price I have not verified.
 - Public routes have no auth (reset, purchase, cases). Anyone with the URL can reset the demo or spend Gemini quota. Sandbox money only.
 - Models in the failover chain other than the evaluated one have no eval numbers.
-- `/test` buyer button renders, but approve and capture through it have not been clicked.
+- `/test` is off in production. Locally its button renders, but approve and capture through it have not been clicked.
+- Free Postgres on Render expires 30 days after creation (created Nov 8, so about Dec 8). See the workaround above.
 - Only one buyer token is seeded; it is reused for every agent purchase.
 
 ## 8. Demo video (~2:50)

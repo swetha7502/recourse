@@ -15,4 +15,6 @@
 | 1:40–2:15 | Shopper, Case view | Click "Demo: buyer's remorse" (switch off) and run it. "This item matches the mandate. A color the shopper never stated isn't an agent error, so the claim is denied, with an explanation." |
 | 2:15–2:50 | Eval, architecture | "On 20 held-out cases, hybrid and LLM-only both scored 20 out of 20, and rules alone scored 12. So the LLM does the judging. The rules are a guardrail: a broken hard constraint can't be argued away, and they keep working when the LLM is down." Close: "PayPal holds the payment method. Recourse enforces the mandate, and makes the party at fault pay." |
 
+**Timing on production (Nov 8):** both cases take about 30 seconds of app time when the server is warm, and about 66 seconds when it starts asleep. Open the site a minute before recording to wake it.
+
 **Dependencies:** the invoice step needs Invoicing enabled on the sandbox app and `SEED_OPERATOR_EMAIL` set to the real operator account. Without them, show "Invoiced to operator (pending)" and don't claim recovery.

@@ -6,7 +6,7 @@ Hackathon prototype. PayPal **sandbox only**: no real money moves.
 
 ## For judges
 
-**Live demo:** https://recourse-zp67.onrender.com. It runs on Render's free tier, so after 15 idle minutes the first request takes about a minute while the server wakes up. The app tells you when that is happening. Reload once if a page is still blank after a minute.
+**Live demo:** https://recourse-zp67.onrender.com. It runs on Render's free tier, so after 15 idle minutes the first request takes about a minute while the server wakes up. The app tells you when that is happening. In our tests the first request after sleep took about 40 seconds, and both demo cases take about 30 seconds of clicking once the server is awake. Reload once if a page is still blank after a minute.
 
 No login is needed. The demo buyer already has a saved sandbox PayPal account.
 
