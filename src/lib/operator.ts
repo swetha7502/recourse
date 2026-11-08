@@ -1,6 +1,6 @@
-import { and, desc, eq, like, not } from "drizzle-orm";
+import { and, desc, eq, like, not, sql } from "drizzle-orm";
 import { getDb } from "@/db";
-import { cases, intents, ledger, llmUsage, operators, orders } from "@/db/schema";
+import { cases, intents, ledger, llmUsage, operators, orders, webhookEvents } from "@/db/schema";
 import { getScorecard, PAID_STATUSES } from "./case-view";
 import { CaseError } from "./cases";
 import { quotaDay } from "./llm";
@@ -41,7 +41,24 @@ export async function getOperatorView() {
     .where(eq(llmUsage.day, day))
     .orderBy(llmUsage.model);
 
-  return { scorecard: await getScorecard(operator.id), invoices, quota: { day, limit: FREE_TIER_DAILY_LIMIT, models: quota } };
+  const webhooks = await db
+    .select({
+      eventType: webhookEvents.eventType,
+      verified: webhookEvents.verified,
+      receivedAt: webhookEvents.receivedAt,
+      processed: sql<boolean>`${webhookEvents.processedAt} is not null`,
+      error: webhookEvents.processingError,
+    })
+    .from(webhookEvents)
+    .orderBy(desc(webhookEvents.receivedAt))
+    .limit(10);
+
+  return {
+    scorecard: await getScorecard(operator.id),
+    invoices,
+    quota: { day, limit: FREE_TIER_DAILY_LIMIT, models: quota },
+    webhooks,
+  };
 }
 
 export async function setLiabilityAccepted() {

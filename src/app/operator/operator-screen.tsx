@@ -20,6 +20,13 @@ type View = {
     paypalRef: string | null;
   }[];
   quota: { day: string; limit: number; models: { model: string; calls: number }[] };
+  webhooks: {
+    eventType: string;
+    verified: boolean;
+    receivedAt: string;
+    processed: boolean;
+    error: string | null;
+  }[];
 };
 
 const card = "mt-6 rounded-lg border border-border bg-surface p-5";
@@ -124,6 +131,25 @@ export function OperatorScreen() {
         <p className="mt-3 text-xs text-muted">
           Mark paid is a fallback for when PayPal&apos;s paid webhook does not arrive.
         </p>
+      </section>
+
+      <section className={card}>
+        <h2 className="font-medium">Recent PayPal webhooks</h2>
+        {view.webhooks.length === 0 && (
+          <p className="mt-2 text-sm text-muted">No webhooks received since the last reset.</p>
+        )}
+        <ul className="mt-2 space-y-1 text-sm">
+          {view.webhooks.map((hook, index) => (
+            <li key={`${hook.receivedAt}-${index}`} className="flex flex-wrap justify-between gap-2">
+              <span>{hook.eventType}</span>
+              <span className="text-xs text-muted">
+                {hook.verified ? "signature verified" : "UNVERIFIED (dev only)"},{" "}
+                {hook.error ? `error: ${hook.error}` : hook.processed ? "processed" : "pending"},{" "}
+                {new Date(hook.receivedAt).toLocaleTimeString()}
+              </span>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className={card}>
