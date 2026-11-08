@@ -56,7 +56,7 @@ Production: https://recourse-zp67.onrender.com (Render free plans). Verified Nov
 - [x] `PAYMENT.CAPTURE.COMPLETED` real payload: `supplementary_data.related_ids.order_id` present. Matches the handler
 - [x] `INVOICING.INVOICE.PAID` real payload: id at `resource.invoice.id`. Also fires for a recorded payment, with `invoice.status` `MARKED_AS_PAID`; the handler now maps that to `PAID_MANUAL`
 - [x] `CUSTOMER.DISPUTE.CREATED` real payload has no `resource.id`: it carries `dispute_id`, `reason` and `disputed_transactions[].seller_transaction_id` (the capture). Fixed to link via the capture and show the dispute on the case timeline; resent event verified on case `6a47662d` (dispute `PP-R-QGH-10197242`, still open in sandbox)
-- [ ] `VAULT.PAYMENT-TOKEN.CREATED`: needs a buyer to approve a new vaulted order (buyer login). Handler only stores the event
+- [x] `VAULT.PAYMENT-TOKEN.CREATED`: signed and verified in prod after a second Vault spike (Nov 8). PayPal reused the existing token `21l88829wx595281f` for the same buyer, so the seeded demo buyer is unchanged. Handler only stores it. The operator view now lists recent webhooks with their verification status
 - [ ] `PAYMENT.CAPTURE.DECLINED` / `DENIED`: **not reproducible in sandbox** without negative testing, and a declined capture usually fails synchronously without a webhook. Handler tested with local events only
 - [x] Real operator paid invoice `INV2-BR9A-LMKE-YJQJ-NLA9` from PayPal; signed `INVOICING.INVOICE.PAID` set the ledger to `PAID` and the panel to Recovered, with no Mark paid (case `ebd86746`). Fixed on the way: `SEED_OPERATOR_EMAIL` had been set to the merchant account
 - [ ] `/test` button flow on prod: not needed by judges, so `ENABLE_TEST_PAGE` stays `false`
