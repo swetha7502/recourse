@@ -4,7 +4,7 @@ import { ledger, orders, webhookEvents } from "@/db/schema";
 
 export type WebhookResource = {
   id?: string;
-  invoice?: { id?: string };
+  invoice?: { id?: string; status?: string };
   links?: { href?: string; rel?: string }[];
   supplementary_data?: { related_ids?: { order_id?: string } };
 };
@@ -49,10 +49,12 @@ async function applyRefund(resource: WebhookResource) {
   }
 }
 
+// PayPal also sends this event when a payment is recorded by hand (status MARKED_AS_PAID).
 async function applyInvoicePaid(event: WebhookEvent) {
   const invoiceId = resourceIdOf(event);
   if (!invoiceId) throw new Error("Invoice event has no invoice id");
-  await getDb().update(ledger).set({ status: "PAID" }).where(eq(ledger.paypalRef, invoiceId));
+  const status = event.resource?.invoice?.status === "MARKED_AS_PAID" ? "PAID_MANUAL" : "PAID";
+  await getDb().update(ledger).set({ status }).where(eq(ledger.paypalRef, invoiceId));
 }
 
 async function dispatch(event: WebhookEvent) {
