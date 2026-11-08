@@ -1,3 +1,6 @@
+import { eq } from "drizzle-orm";
+import { getDb } from "@/db";
+import { cases, orders } from "@/db/schema";
 import { apiError } from "@/lib/api-errors";
 import { adjudicateCase, executeRemedy, openCase } from "@/lib/cases";
 
@@ -29,4 +32,15 @@ export async function POST(request: Request) {
     if (caseId) return Response.json({ id: caseId, pending: true });
     return apiError(error);
   }
+}
+
+export async function GET(request: Request) {
+  const captureId = new URL(request.url).searchParams.get("captureId");
+  if (!captureId) return Response.json({ error: "Pass captureId" }, { status: 400 });
+  const [row] = await getDb()
+    .select({ id: cases.id })
+    .from(cases)
+    .innerJoin(orders, eq(cases.orderId, orders.id))
+    .where(eq(orders.captureId, captureId));
+  return row ? Response.json(row) : Response.json({ error: "No case for that capture" }, { status: 404 });
 }
