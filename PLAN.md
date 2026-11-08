@@ -124,10 +124,10 @@ Built and working locally against sandbox. Render is deferred, so Wed 4 "Live on
 |---|---|
 | Wed 4 / Thu 5 | Done locally. Option A. Deploy deferred (see 2b) |
 | Fri 6 | Done. Full buy flow driven through the real UI in a headless browser |
-| Sat 7 | Adjudicator, ablation harness and Case screen done. **Held-out eval still running** (20 Gemini requests per model per day) |
+| Sat 7 | Done. Held-out: hybrid 20/20, LLM-only 20/20, rules-only 12/20. **No hybrid accuracy gain**; see README |
 | Sun 8 | Refund and invoice both done with real sandbox calls (create, send, record payment). A real operator paying the invoice has not been tried |
 | Mon 9 | Webhook to ledger and timeline done, tested with local unverified events only. Mark paid verified live |
-| Tue 10 | Demo history, reset, README done. Judge credentials and rough video are yours |
+| Tue 10 | Demo history, reset, README, judge section done. Render free blueprint rehearsed on a clean clone. Deploy waits on you |
 | Wed 11 | Draft in `docs/`. Video, YouTube and Devpost submission are yours |
 
 **Known issues**
@@ -137,9 +137,11 @@ Built and working locally against sandbox. Render is deferred, so Wed 4 "Live on
   - When quota runs out, parsing, the agent and rulings fall back to rules and are labelled. A rules-only guess has 0.6 confidence, so it goes to human review and moves no money. Hard violations still execute, since they never needed the LLM.
   - Calls per model per day show in the operator view.
   - `.env.local` sets `GEMINI_MODELS=gemini-3.5-flash` so the app stays off the eval's models. Remove it when the eval finishes.
-- **Held-out eval order:** hybrid first, then rules, then LLM-only with leftover quota over the following days. Prompt frozen at `9d29028f8f`. Do not change it after results.
+- **Held-out eval complete** with prompt `9d29028f8f`. Do not change the prompt; any change invalidates the reported numbers.
 - Demo case 2 reuses tuning case 16 (not held-out), so its text is in the repo. The rest of `test_cases.json` stays uncommitted.
-- Demo case 2's agent decision is not captured yet, so it shows the labelled rules-based agent. Capture one real run (about 3 calls) and add it to `demo-cache.json`.
+- Both demo cases replay saved real outputs. A clean-clone rehearsal with an invalid Gemini key passed with 0 calls.
+- **Render is on free plans.** Free Postgres expires 30 days after creation, and Render deletes it 14 days later. Free web services sleep after 15 idle minutes, take about a minute to wake, and cannot run a preDeployCommand, so migrate and seed run in startCommand (26s to healthy in rehearsal).
+- **Before the database expires** (30 days after deploy), if judging is still open: delete it in Render and re-sync the Blueprint. A new free database is created and startCommand migrates and reseeds it. This loses case history only. The paid alternative is `basic-256mb`, whose price I have not verified.
 - Public routes have no auth (reset, purchase, cases). Anyone with the URL can reset the demo or spend Gemini quota. Sandbox money only.
 - Models in the failover chain other than the evaluated one have no eval numbers.
 - `/test` buyer button renders, but approve and capture through it have not been clicked.

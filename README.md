@@ -4,6 +4,26 @@ Today, when an AI shopping agent makes a mistake, the shopper or the small merch
 
 Hackathon prototype. PayPal **sandbox only**: no real money moves.
 
+## For judges
+
+**Live demo:** [RENDER URL]. It runs on Render's free tier, so after 15 idle minutes the first request takes about a minute while the server wakes up. The app tells you when that is happening. Reload once if a page is still blank after a minute.
+
+No login is needed. The demo buyer already has a saved sandbox PayPal account.
+
+**Try these:**
+1. On the Shopper screen, click **Demo: wrong size**, then **Create intent**, then **Sign mandate and let the agent buy**. The demo switch is pre-ticked and makes the agent pick the wrong size. Open a case with the pre-filled complaint. You should see an agent-error ruling, a real sandbox refund, and an invoice sent to the agent operator.
+2. Click **Operator view**, then **Mark paid**. Back on the case, the merchant panel changes to "Recovered from operator".
+3. Click **Demo: buyer's remorse** and run it the same way. You should see a "within intent" ruling with no refund.
+4. Type your own instruction and complaint. These use live Gemini calls; see below.
+5. Click **Reset demo data** at any time.
+
+**What's cached and what's live:**
+- **PayPal is always live** (sandbox): orders, captures, refunds and invoices are real API calls. Every page shows the PayPal order ID.
+- **The two demo cases replay saved real Gemini outputs**, so they always work. The UI says when an agent decision is replayed.
+- **Your own instructions call Gemini live**, on a free tier of 20 requests per model per day. If quota is out, the app falls back to rules and labels it, for example "Rules-only (LLM unavailable)". Those rulings go to human review and move no money.
+
+[OPTIONAL OPERATOR LOGIN: if you want judges to pay an invoice as the operator in PayPal, put the sandbox operator email and password in Devpost's private testing-instructions field, not here.]
+
 ## How it works
 
 1. **Mandate.** The shopper describes what to buy. Recourse parses it into constraints and a budget, and the shopper signs it once.
@@ -24,8 +44,21 @@ Rulings below 70% confidence are flagged for human review and nothing executes.
 
 Ablation on 30 labelled cases, tuned on 10 and reported on 20 held-out cases never used for tuning. Results live in [eval-results/](eval-results/).
 
-<!-- Fill in from eval-results/holdout.json when the held-out run finishes. -->
-Held-out results: pending.
+Held-out results (20 cases, `gemini-2.5-flash`, prompt version `9d29028f8f`):
+
+| Mode | Overall | Agent error | Merchant mismatch | Within intent | Flagged for review |
+|---|---|---|---|---|---|
+| Hybrid (shipped) | **20/20** | 4/4 | 6/6 | 10/10 | 0 |
+| LLM-only | **20/20** | 4/4 | 6/6 | 10/10 | 0 |
+| Rules-only | 12/20 | 1/4 | 1/6 | 10/10 | 19 |
+
+**What this shows.** On this set, hybrid and LLM-only tied, so the eval shows **no accuracy gain** from adding rules. Rules-only missed 8 cases, all judged "within intent" when they were not (#2, 5, 7, 8, 10, 11, 25, 27). Those needed fuzzy judgement about color, fit or a listing's claims, which keyword rules cannot make. Hybrid and LLM-only made no errors.
+
+Hybrid ships anyway for reasons the accuracy number does not capture:
+- A failed hard constraint is decided by rules, and the LLM cannot override it. On this set that happened once (#3, capacity), so it saved one LLM call.
+- When the LLM is unavailable, hard violations still resolve and everything else goes to human review.
+
+**Limits.** 20 cases is small, and a perfect score may mean the set is easy rather than that the adjudicator is. The prompt was written once, scored 10/10 on the separate 10-case tuning set, and was not changed after that. The held-out set was never used for tuning. [Fill in who wrote the cases and whether you spot-checked the labels.]
 
 The dataset (`test_cases.json`) is not in this repo.
 
