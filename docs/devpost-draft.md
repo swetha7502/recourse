@@ -40,7 +40,7 @@ A merchant protection panel shows what has actually been recovered, and an opera
 
 ## Evaluation
 
-We compared rules-only, LLM-only and hybrid on 30 labelled cases written by [WHO WROTE THEM; must not be Gemini], tuning on 10 and reporting on the 20 held-out cases. Held-out results (`gemini-2.5-flash`):
+We compared rules-only, LLM-only and hybrid on 30 labelled cases written by the author with help from ChatGPT (deliberately not Gemini, the adjudicator's model family), tuning on 10 and reporting on the 20 held-out cases. Held-out results (`gemini-2.5-flash`):
 
 | Mode | Overall | Agent error | Merchant mismatch | Within intent | Flagged for review |
 |---|---|---|---|---|---|
@@ -48,7 +48,7 @@ We compared rules-only, LLM-only and hybrid on 30 labelled cases written by [WHO
 | LLM-only | **20/20** | 4/4 | 6/6 | 10/10 | 0 |
 | Rules-only | 12/20 | 1/4 | 1/6 | 10/10 | 19 |
 
-Hybrid and LLM-only tied, so on this set adding rules gave **no accuracy gain**. Rules-only missed 8 cases that needed judgement about color, fit or a listing's claims. We ship hybrid because a failed hard constraint is decided by rules and the LLM cannot override it, and because hard violations still resolve when the LLM is unavailable. Twenty cases is a small set, and a perfect score may mean it is easy.
+Hybrid and LLM-only tied, so on this set adding rules gave **no accuracy gain**. Rules-only missed 8 cases that needed judgement about color, fit or a listing's claims. We ship hybrid because a failed hard constraint is decided by rules and the LLM cannot override it, and because hard violations still resolve when the LLM is unavailable. Twenty cases is a small set, a perfect score may mean it is easy, and the labels were not independently spot-checked.
 
 ## Challenges
 
@@ -70,6 +70,6 @@ The shopping agent is simulated, and the demo's agent error is injected on reque
 ## Links
 
 - Demo: https://recourse-zp67.onrender.com
-- Video: [YOUTUBE URL]
+- Video: TODO: add the YouTube link after recording
 - Code: https://github.com/swetha7502/recourse
 - Test access: no login needed; the demo buyer has a saved sandbox PayPal. See "For judges" in the README.

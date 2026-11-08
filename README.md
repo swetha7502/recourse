@@ -12,7 +12,7 @@ No login is needed. The demo buyer already has a saved sandbox PayPal account.
 
 **Try these:**
 1. On the Shopper screen, click **Demo: wrong size**, then **Create intent**, then **Sign mandate and let the agent buy**. The demo switch is pre-ticked and makes the agent pick the wrong size. Open a case with the pre-filled complaint. You should see an agent-error ruling, a real sandbox refund, and an invoice sent to the agent operator.
-2. Click **Operator view**, then **Mark paid**. Back on the case, the merchant panel changes to "Recovered from operator".
+2. Click **Operator view**, then **Mark paid**. Back on the case, the merchant panel changes to "Recovered from operator". The operator view also lists the last 10 PayPal webhooks with their signature-verification status, so you can see real PayPal events arriving.
 3. Click **Demo: buyer's remorse** and run it the same way. You should see a "within intent" ruling with no refund.
 4. Type your own instruction and complaint. These use live Gemini calls; see below.
 5. Click **Reset demo data** at any time.
@@ -58,7 +58,7 @@ Hybrid ships anyway for reasons the accuracy number does not capture:
 - A failed hard constraint is decided by rules, and the LLM cannot override it. On this set that happened once (#3, capacity), so it saved one LLM call.
 - When the LLM is unavailable, hard violations still resolve and everything else goes to human review.
 
-**Limits.** 20 cases is small, and a perfect score may mean the set is easy rather than that the adjudicator is. The prompt was written once, scored 10/10 on the separate 10-case tuning set, and was not changed after that. The held-out set was never used for tuning. [Fill in who wrote the cases and whether you spot-checked the labels.]
+**Limits.** 20 cases is small, and a perfect score may mean the set is easy rather than that the adjudicator is. The prompt was written once, scored 10/10 on the separate 10-case tuning set, and was not changed after that. The held-out set was never used for tuning. The 30 cases were written by the author with help from ChatGPT, deliberately not Gemini, so the adjudicator is not graded on cases from its own model family. The labels were not independently spot-checked, so a few may be wrong.
 
 The dataset (`test_cases.json`) is not in this repo.
 
