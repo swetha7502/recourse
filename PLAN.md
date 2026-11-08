@@ -58,7 +58,7 @@ Production: https://recourse-zp67.onrender.com (Render free plans). Verified Nov
 - [ ] `CUSTOMER.DISPUTE.CREATED`: needs a sandbox buyer to file a dispute (buyer login). Handler only stores the event
 - [ ] `VAULT.PAYMENT-TOKEN.CREATED`: needs a buyer to approve a new vaulted order (buyer login). Handler only stores the event
 - [ ] `PAYMENT.CAPTURE.DECLINED` / `DENIED`: not triggerable in sandbox without negative testing. Handler untested against a real payload
-- [ ] Real operator pays an invoice from a second browser profile (Mark paid path verified instead). Open prod invoice for this: `INV2-LY5Y-DTXS-KEJM-R67A` (case `dcc6b6d7`). Reset demo data deletes the case, so pay it first
+- [x] Real operator paid invoice `INV2-BR9A-LMKE-YJQJ-NLA9` from PayPal; signed `INVOICING.INVOICE.PAID` set the ledger to `PAID` and the panel to Recovered, with no Mark paid (case `ebd86746`). Fixed on the way: `SEED_OPERATOR_EMAIL` had been set to the merchant account
 - [ ] `/test` button flow on prod: not needed by judges, so `ENABLE_TEST_PAGE` stays `false`
 - [x] Full shopper flow in the browser on the public URL, both demo cases: 30-32s warm, 65.8s from a sleeping server
 - [x] Cold start: "waking up" message appears at 8.5s and the first request after sleep finishes in 37.4s; friendly 503 message renders
