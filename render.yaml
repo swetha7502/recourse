@@ -1,6 +1,6 @@
 databases:
   - name: recourse-db
-    plan: basic-256mb
+    plan: free
     region: oregon
     postgresMajorVersion: "16"
     databaseName: recourse
@@ -10,11 +10,11 @@ services:
   - type: web
     name: recourse
     runtime: node
-    plan: starter
+    plan: free
     region: oregon
     buildCommand: npm ci --include=dev && npm run build
-    preDeployCommand: npm run db:migrate && npm run db:seed
-    startCommand: npm run start
+    # Free instances cannot run a preDeployCommand; migrate and seed are idempotent.
+    startCommand: npm run db:migrate && npm run db:seed && npm run start
     healthCheckPath: /api/health
     envVars:
       - key: DATABASE_URL

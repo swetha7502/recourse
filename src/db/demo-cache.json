@@ -87,5 +87,58 @@
       ],
       "quantity": 1
     }
+  },
+  {
+    "key": "agent:38f637cde30070022decf90c8da0ad969cf76b8a570c5404bb623d8c9bb298b0",
+    "kind": "agent",
+    "value": {
+      "sku": "PARK-CHR-M",
+      "steps": [
+        {
+          "args": {
+            "query": "winter coat"
+          },
+          "tool": "search_catalog"
+        },
+        {
+          "args": {
+            "query": "coat"
+          },
+          "tool": "search_catalog"
+        },
+        {
+          "args": {
+            "query": "jacket"
+          },
+          "tool": "search_catalog"
+        },
+        {
+          "args": {
+            "query": "parka"
+          },
+          "tool": "search_catalog"
+        },
+        {
+          "args": {
+            "query": "winter"
+          },
+          "tool": "search_catalog"
+        },
+        {
+          "args": {
+            "query": "insulated"
+          },
+          "tool": "search_catalog"
+        },
+        {
+          "args": {
+            "sku": "PARK-CHR-M",
+            "quantity": 1
+          },
+          "tool": "purchase"
+        }
+      ],
+      "quantity": 1
+    }
   }
 ]

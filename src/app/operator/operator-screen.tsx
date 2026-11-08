@@ -51,7 +51,13 @@ export function OperatorScreen() {
     setBusy(false);
   }
 
-  if (!view) return <p className={error ? "text-danger" : "text-muted"}>{error ?? "Loading..."}</p>;
+  if (!view) {
+    return (
+      <p className={error ? "text-danger" : "text-muted"}>
+        {error ?? "Loading... (the free server can take about a minute to wake up)"}
+      </p>
+    );
+  }
   const { scorecard, invoices } = view;
 
   return (

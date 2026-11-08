@@ -56,6 +56,9 @@ async function send<T>(path: string, body: unknown): Promise<T> {
     body: JSON.stringify(body),
   });
   const json = await res.json().catch(() => ({}));
+  if (res.status === 502 || res.status === 503) {
+    throw new Error(json.error ?? "The server is waking up. Wait a few seconds and try again.");
+  }
   if (!res.ok) throw new Error(json.error ?? "Something went wrong, try again");
   return json as T;
 }
@@ -76,6 +79,10 @@ function constraintRows(c: Constraints): [string, string][] {
   return rows.filter((row): row is [string, string] => Boolean(row[1]));
 }
 
+const SLOW_REQUEST_MS = 8000;
+const WAKING_NOTE =
+  "Still working. The free server may be waking up, which can take about a minute.";
+
 const card = "mt-6 rounded-lg border border-border bg-surface p-5";
 const primary =
   "rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-contrast disabled:opacity-50";
@@ -95,11 +102,13 @@ export function ShopperFlow() {
   async function run(label: string, action: () => Promise<void>) {
     setBusy(label);
     setError(null);
+    const slow = setTimeout(() => setBusy(`${label} ${WAKING_NOTE}`), SLOW_REQUEST_MS);
     try {
       await action();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Something went wrong, try again");
     } finally {
+      clearTimeout(slow);
       setBusy(null);
     }
   }

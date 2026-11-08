@@ -53,7 +53,11 @@ export function CaseScreen({ id }: { id: string }) {
   }
 
   if (!view) {
-    return <p className={error ? "text-danger" : "text-muted"}>{error ?? "Loading case..."}</p>;
+    return (
+      <p className={error ? "text-danger" : "text-muted"}>
+        {error ?? "Loading case... (the free server can take about a minute to wake up)"}
+      </p>
+    );
   }
 
   const { ruling, order, intent, panel, scorecard } = view;
