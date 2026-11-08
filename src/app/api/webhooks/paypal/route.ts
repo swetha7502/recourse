@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { after } from "next/server";
 import { getDb } from "@/db";
 import { webhookEvents } from "@/db/schema";
@@ -67,22 +67,13 @@ export async function POST(request: Request) {
       payloadJson: event,
       verified,
     })
-    .onConflictDoNothing({ target: webhookEvents.paypalEventId })
-    .returning({ id: webhookEvents.id });
+    .onConflictDoUpdate({
+      target: webhookEvents.paypalEventId,
+      set: { resourceId: sql`coalesce(${webhookEvents.resourceId}, excluded.resource_id)` },
+    })
+    .returning({ id: webhookEvents.id, processedAt: webhookEvents.processedAt });
 
-  let rowId = inserted?.id;
-  if (!rowId) {
-    const [existing] = await db
-      .select({ id: webhookEvents.id, processedAt: webhookEvents.processedAt })
-      .from(webhookEvents)
-      .where(eq(webhookEvents.paypalEventId, event.id));
-    if (existing?.processedAt) return Response.json({ received: true, duplicate: true });
-    rowId = existing?.id;
-  }
-
-  if (rowId) {
-    const id = rowId;
-    after(() => processStoredEvent(id, event));
-  }
+  if (inserted.processedAt) return Response.json({ received: true, duplicate: true });
+  after(() => processStoredEvent(inserted.id, event));
   return Response.json({ received: true, verified });
 }

@@ -5,6 +5,9 @@ import { ledger, orders, webhookEvents } from "@/db/schema";
 export type WebhookResource = {
   id?: string;
   invoice?: { id?: string; status?: string };
+  dispute_id?: string;
+  reason?: string;
+  disputed_transactions?: { seller_transaction_id?: string }[];
   links?: { href?: string; rel?: string }[];
   supplementary_data?: { related_ids?: { order_id?: string } };
 };
@@ -15,7 +18,11 @@ export type WebhookEvent = {
   resource?: WebhookResource;
 };
 
-export const resourceIdOf = (event: WebhookEvent) => event.resource?.id ?? event.resource?.invoice?.id;
+// Disputes have no resource.id; the disputed capture links them to an order.
+export const resourceIdOf = (event: WebhookEvent) =>
+  event.resource?.id ??
+  event.resource?.invoice?.id ??
+  event.resource?.disputed_transactions?.[0]?.seller_transaction_id;
 
 function captureIdFromLinks(resource: WebhookResource): string | undefined {
   for (const link of resource.links ?? []) {

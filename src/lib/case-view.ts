@@ -155,11 +155,16 @@ export async function getCaseView(caseId: string) {
       label: entry.kind === "refund" ? "Refund issued" : "Invoice raised",
       detail: `${formatCents(entry.amountCents)}, ${entry.status}${entry.paypalRef ? `, ${entry.paypalRef}` : ""}`,
     })),
-    ...events.map((event) => ({
-      at: event.receivedAt.toISOString(),
-      label: `PayPal webhook: ${event.eventType}`,
-      detail: event.verified ? "Signature verified" : "UNVERIFIED (dev only)",
-    })),
+    ...events.map((event) => {
+      const resource = (event.payloadJson as { resource?: { dispute_id?: string; reason?: string } })
+        .resource;
+      const dispute = resource?.dispute_id ? `${resource.dispute_id}, ${resource.reason}, ` : "";
+      return {
+        at: event.receivedAt.toISOString(),
+        label: `PayPal webhook: ${event.eventType}`,
+        detail: `${dispute}${event.verified ? "Signature verified" : "UNVERIFIED (dev only)"}`,
+      };
+    }),
   ].sort((a, b) => a.at.localeCompare(b.at));
 
   return {
