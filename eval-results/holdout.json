@@ -1,0 +1,120 @@
+{
+  "set": "holdout",
+  "model": "gemini-2.5-flash",
+  "prompt": "9d29028f8f",
+  "cases": 20,
+  "summary": {
+    "hybrid": {
+      "correct": 20,
+      "total": 20,
+      "accuracy": 1,
+      "perFault": {
+        "AGENT_ERROR": {
+          "correct": 4,
+          "total": 4
+        },
+        "MERCHANT_MISMATCH": {
+          "correct": 6,
+          "total": 6
+        },
+        "WITHIN_INTENT": {
+          "correct": 10,
+          "total": 10
+        }
+      },
+      "flaggedForReview": 0,
+      "failures": []
+    },
+    "rules": {
+      "correct": 12,
+      "total": 20,
+      "accuracy": 0.6,
+      "perFault": {
+        "AGENT_ERROR": {
+          "correct": 1,
+          "total": 4
+        },
+        "MERCHANT_MISMATCH": {
+          "correct": 1,
+          "total": 6
+        },
+        "WITHIN_INTENT": {
+          "correct": 10,
+          "total": 10
+        }
+      },
+      "flaggedForReview": 19,
+      "failures": [
+        {
+          "id": 2,
+          "expected": "AGENT_ERROR",
+          "got": "WITHIN_INTENT",
+          "confidence": 0.6
+        },
+        {
+          "id": 5,
+          "expected": "AGENT_ERROR",
+          "got": "WITHIN_INTENT",
+          "confidence": 0.6
+        },
+        {
+          "id": 7,
+          "expected": "MERCHANT_MISMATCH",
+          "got": "WITHIN_INTENT",
+          "confidence": 0.6
+        },
+        {
+          "id": 8,
+          "expected": "MERCHANT_MISMATCH",
+          "got": "WITHIN_INTENT",
+          "confidence": 0.6
+        },
+        {
+          "id": 10,
+          "expected": "MERCHANT_MISMATCH",
+          "got": "WITHIN_INTENT",
+          "confidence": 0.6
+        },
+        {
+          "id": 11,
+          "expected": "MERCHANT_MISMATCH",
+          "got": "WITHIN_INTENT",
+          "confidence": 0.6
+        },
+        {
+          "id": 25,
+          "expected": "AGENT_ERROR",
+          "got": "WITHIN_INTENT",
+          "confidence": 0.6
+        },
+        {
+          "id": 27,
+          "expected": "MERCHANT_MISMATCH",
+          "got": "WITHIN_INTENT",
+          "confidence": 0.6
+        }
+      ]
+    },
+    "llm": {
+      "correct": 20,
+      "total": 20,
+      "accuracy": 1,
+      "perFault": {
+        "AGENT_ERROR": {
+          "correct": 4,
+          "total": 4
+        },
+        "MERCHANT_MISMATCH": {
+          "correct": 6,
+          "total": 6
+        },
+        "WITHIN_INTENT": {
+          "correct": 10,
+          "total": 10
+        }
+      },
+      "flaggedForReview": 0,
+      "failures": []
+    }
+  }
+}
