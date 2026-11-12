@@ -14,7 +14,7 @@ No login is needed. The demo buyer already has a saved sandbox PayPal account.
 1. On the Shopper screen, click **Demo: wrong size**, then **Create intent**, then **Sign mandate and let the agent buy**. The demo switch is pre-ticked and makes the agent pick the wrong size. Open a case with the pre-filled complaint. You should see an agent-error ruling, a real sandbox refund, and an invoice sent to the agent operator.
 2. Click **Operator view**, then **Mark paid**. Back on the case, the merchant panel changes to "Recovered from operator". The operator view also lists the last 10 PayPal webhooks with their signature-verification status, so you can see real PayPal events arriving.
 3. Click **Demo: buyer's remorse** and run it the same way. You should see a "within intent" ruling with no refund.
-4. Type your own instruction and complaint. These use live Gemini calls; see below.
+4. Type your own instruction and complaint, for example "Buy a 65W USB-C charger under $35" or "Buy a navy running shoe, size 9, under $80". Tick the demo switch to see a fault ruling. These use live Gemini calls; see below.
 5. Click **Reset demo data** at any time.
 
 **What's cached and what's live:**
@@ -22,7 +22,7 @@ No login is needed. The demo buyer already has a saved sandbox PayPal account.
 - **The two demo cases replay saved real Gemini outputs**, so they always work. The UI says when an agent decision is replayed.
 - **Your own instructions call Gemini live**, on a free tier of 20 requests per model per day. If quota is out, the app falls back to rules and labels it, for example "Rules-only (LLM unavailable)". Those rulings go to human review and move no money.
 
-[OPTIONAL OPERATOR LOGIN: if you want judges to pay an invoice as the operator in PayPal, put the sandbox operator email and password in Devpost's private testing-instructions field, not here.]
+**Want to pay the invoice inside PayPal instead of using Mark paid?** That takes two sandbox logins (the merchant, to copy the invoice's payment link, and the agent operator, to pay it). They are in the Devpost testing instructions rather than this public repo. Mark paid shows the same flow: it records the payment on the PayPal invoice through the API, and PayPal's paid webhook updates the case.
 
 ## How it works
 
